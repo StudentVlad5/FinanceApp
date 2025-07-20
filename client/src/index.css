@@ -1,0 +1,15 @@
+@import url(./vendor/reset.css);
+@import url(./vendor/fonts.css);
+
+body {
+  background-color: var(--primary-color);
+}
+
+:root {
+  --primary-color: #ebf6f5;
+  --secondary-color: #5cbdb9;
+  --tertiary-color: #e17d11;
+  --task-color: #96ec89;
+  --quaternary-color: #222222;
+  --celebrate-color: #f3807e;
+}

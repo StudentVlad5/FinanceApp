@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/static/css/main.51b1fb9b.css",
+    "main.js": "/static/js/main.e699ab8d.js",
+    "static/media/check-mark-svgrepo-com-green.svg": "/static/media/check-mark-svgrepo-com-green.2fcd5387ad38ead73f8f0f2217caef80.svg",
+    "static/media/rubbish-bin-svgrepo-com.svg": "/static/media/rubbish-bin-svgrepo-com.e485c14441819540f32de975a2ef73a8.svg",
+    "static/media/check-mark-svgrepo-com.svg": "/static/media/check-mark-svgrepo-com.1cfbc11661099547a3f6a81dad03ff2c.svg",
+    "static/media/close-button-svgrepo-com.svg": "/static/media/close-button-svgrepo-com.a14d7cea6bb8425e848097e87858325b.svg",
+    "static/media/edit-3-svgrepo-com.svg": "/static/media/edit-3-svgrepo-com.9c37003d43cd5ca13143a3d6ee61bc45.svg",
+    "index.html": "/index.html",
+    "main.51b1fb9b.css.map": "/static/css/main.51b1fb9b.css.map",
+    "main.e699ab8d.js.map": "/static/js/main.e699ab8d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.51b1fb9b.css",
+    "static/js/main.e699ab8d.js"
+  ]
+}
