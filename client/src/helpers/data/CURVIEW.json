@@ -1,0 +1,22 @@
+[
+    {
+        "DAT": "2024-01-01",
+        "CHG_ID_CUR": 643,
+        "CHG_ID_COUNTRY_CUR": 980
+    },
+    {
+        "DAT": "2024-07-17",
+        "CHG_ID_CUR": 840,
+        "CHG_ID_COUNTRY_CUR": 980
+    },
+    {
+        "DAT": "2024-07-17",
+        "CHG_ID_CUR": 978,
+        "CHG_ID_COUNTRY_CUR": 980
+    },
+    {
+        "DAT": "2007-08-25",
+        "CHG_ID_CUR": 980,
+        "CHG_ID_COUNTRY_CUR": 980
+    }
+]

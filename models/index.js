@@ -1,5 +1,17 @@
-const Appointment = require("./appointments");
+const Account = require('./accounts');
+const {
+  Users,
+  userValidationSchema,
+  userUpdateValidationSchema,
+  userEditValidationSchema,
+  userRegistationSchema,
+} = require('./user');
 
 module.exports = {
-  Appointment,
+  Account,
+  Users,
+  userValidationSchema,
+  userUpdateValidationSchema,
+  userEditValidationSchema,
+  userRegistationSchema,
 };

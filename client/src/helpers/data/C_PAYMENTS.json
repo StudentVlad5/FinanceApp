@@ -1,0 +1,29 @@
+[
+    {
+        "CP_ID": "",
+        "CP_PERCENT": "191.67",
+        "CP_MONEY": "7700",
+        "CP_FEE": "0",
+        "CP_DATE": "2011-03-25",
+        "CP_DONE": 0,
+        "CP_SCH": 471
+    },
+    {
+        "CP_ID": "",
+        "CP_PERCENT": "127.78",
+        "CP_MONEY": "7700",
+        "CP_FEE": "0",
+        "CP_DATE": "2011-04-25",
+        "CP_DONE": 0,
+        "CP_SCH": 471
+    },
+    {
+        "CP_ID": "",
+        "CP_PERCENT": "63.89",
+        "CP_MONEY": "7600",
+        "CP_FEE": "0",
+        "CP_DATE": "2011-05-25",
+        "CP_DONE": 0,
+        "CP_SCH": 471
+    }
+]

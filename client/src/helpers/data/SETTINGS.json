@@ -1,0 +1,146 @@
+[
+    {
+        "SET_NAME": "id_currency",
+        "SET_VALUE": "980"
+    },
+    {
+        "SET_NAME": "payee_reestr_view",
+        "SET_VALUE": "0"
+    },
+    {
+        "SET_NAME": "budget_section",
+        "SET_VALUE": "income"
+    },
+    {
+        "SET_NAME": "update",
+        "SET_VALUE": "13.09.2016"
+    },
+    {
+        "SET_NAME": "first",
+        "SET_VALUE": "0"
+    },
+    {
+        "SET_NAME": "f_accounts",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_asset",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_budget",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_calendar",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_categories",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_contacts",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_credits",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_investing",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_magazine",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_main",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_register",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_reports",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_targets",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "f_users",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "c_rate",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "c_date",
+        "SET_VALUE": "0"
+    },
+    {
+        "SET_NAME": "c_comment",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "budget_account",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "reg_sort",
+        "SET_VALUE": "2"
+    },
+    {
+        "SET_NAME": "reestr_price",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "reestr_comment",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "tag_reestr_view",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "acid_326",
+        "SET_VALUE": "-"
+    },
+    {
+        "SET_NAME": "topbuttons",
+        "SET_VALUE": "1"
+    },
+    {
+        "SET_NAME": "params",
+        "SET_VALUE": "115wj"
+    },
+    {
+        "SET_NAME": "tb_01",
+        "SET_VALUE": "Счета"
+    },
+    {
+        "SET_NAME": "tb_02",
+        "SET_VALUE": "Бюджет"
+    },
+    {
+        "SET_NAME": "tb_03",
+        "SET_VALUE": "Календарь"
+    },
+    {
+        "SET_NAME": "tb_04",
+        "SET_VALUE": "Отчеты"
+    },
+    {
+        "SET_NAME": "tb_05",
+        "SET_VALUE": "Валюта"
+    },
+    {
+        "SET_NAME": "show_first_help",
+        "SET_VALUE": "done"
+    }
+]

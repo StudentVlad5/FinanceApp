@@ -1,0 +1,31 @@
+const express = require('express');
+const cors = require('cors');
+const { errorHandler } = require('./helpers');
+const { routerAuth, routerAccouns } = require('./routes');
+
+const app = express();
+app.use(cors());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', '*');
+  next();
+});
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+app.use('/uploads', express.static(`${__dirname}/images`));
+app.use('/uploads', express.static(`${__dirname}/images/events`));
+app.use('/uploads', express.static(`${__dirname}/images/avatars`));
+
+app.use('/api/auth', routerAuth);
+app.use('/api/accounts', routerAccouns);
+
+app.use((req, res) => {
+  console.log('!!!!! START APP (req, res) !!!!!!');
+  res.status(404); // .json({ message: "Not found", data: null });
+  res.json({ messages: 'ERRR JSONS' });
+});
+
+app.use(errorHandler);
+
+module.exports = app;

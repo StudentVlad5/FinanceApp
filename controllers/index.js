@@ -1,5 +1,7 @@
-const appointments = require("./appointments");
+const accounts = require('./accounts');
+const auth = require('./auth');
 
 module.exports = {
-  appointments
+  accounts,
+  auth,
 };

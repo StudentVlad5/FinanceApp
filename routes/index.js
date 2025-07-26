@@ -1,5 +1,7 @@
-const routerAppointments = require("./appointments");
+const routerAccouns = require('./accounts');
+const routerAuth = require('./auth');
 
 module.exports = {
-  routerAppointments
+  routerAccouns,
+  routerAuth,
 };
