@@ -14,8 +14,7 @@ app.use(cors());
 app.use(express.json({ extended: true }));
 
 const PORT = process.env.port || 3030;
-const mongoUri =
-  'mongodb+srv://Vlad:NEYnvGmbWjK7mmu8@ac-xbnxysv.jbhh2ds.mongodb.net/finance?retryWrites=true&w=majority';
+const mongoUri = process.env.mongoUri;
 
 const prod = true;
 
