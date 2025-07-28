@@ -8,14 +8,8 @@ import { refreshUser } from '../redux/auth/operations';
 import { selectIsRefreshing, getPermission } from '../redux/auth/selectors';
 import { SharedLayout } from 'components/SharedLayout/SharedLayout';
 import AccountBalances from './Account_balances/AccountBalances';
-import Accounts from './Accounts/Accouns';
-
-// import Specialists from './Admin/scenes/Specialists/spesialists';
-// import Categories from './Admin/scenes/Categories/categories';
-// import Events from './Admin/scenes/Events/events';
-// import Activate_events from './Admin/scenes/Activate_events/activate_events';
-// import Orders from './Admin/scenes/Orders/orders';
-// import Messages from './Admin/scenes/Message/message';
+import Accounts from './Accounts/Accounts';
+import Currency from './Currency/Currency';
 
 export const App = () => {
   const dispatch = useDispatch();
@@ -30,11 +24,6 @@ export const App = () => {
   const LoginPage = lazy(() => import('pages/LoginPage'));
   const RegisterPage = lazy(() => import('pages/RegisterPage'));
   const ForgotPasswordPage = lazy(() => import('pages/ForgotPasswordPage'));
-  // const TeamPage = lazy(() => import('pages/TeamPage'));
-  // const SpecialistPage = lazy(() => import('pages/SpecialistPage'));
-  // const EventsPage = lazy(() => import('pages/EventsPage'));
-  // const EventDetailsPage = lazy(() => import('pages/EventDetailsPage'));
-  // const AboutUsPage = lazy(() => import('pages/AboutUsPage'));
   const AdminPage = lazy(() => import('pages/Admin/AdminPage'));
 
   return isRefreshing ? (
@@ -49,15 +38,6 @@ export const App = () => {
               path='admin'
               element={<PrivateRoute redirectTo='/login' component={<AdminPage />} />}
             >
-              {/* {/* <Route
-                path="categories"
-                element={
-                  <PrivateRoute
-                    redirectTo="/login"
-                    component={<Categories />}
-                  />
-                }
-              /> */}
               <Route
                 path='account_balances'
                 element={<PrivateRoute redirectTo='/login' component={<AccountBalances />} />}
@@ -66,27 +46,10 @@ export const App = () => {
                 path='accounts'
                 element={<PrivateRoute redirectTo='/login' component={<Accounts />} />}
               />
-              {/* <Route
-                path="activate_events"
-                element={
-                  <PrivateRoute
-                    redirectTo="/login"
-                    component={<Activate_events />}
-                  />
-                }
-              /> */}
-              {/* <Route
-                path="orders"
-                element={
-                  <PrivateRoute redirectTo="/login" component={<Orders />} />
-                }
-              /> */}
-              {/* <Route
-                path="messages"
-                element={
-                  <PrivateRoute redirectTo="/login" component={<Messages />} />
-                }
-              /> */}
+              <Route
+                path='currency'
+                element={<PrivateRoute redirectTo='/login' component={<Currency />} />}
+              />
             </Route>
             <Route
               path='login'
@@ -115,13 +78,6 @@ export const App = () => {
                 <RestrictedRoute redirectTo='/user/profile' component={<ForgotPasswordPage />} />
               }
             />
-
-            {/* <Route path="events" element={<EventsPage />} />
-            <Route path="events/:id" element={<EventDetailsPage />} />
-            <Route path="specialists" element={<TeamPage />} />
-            <Route path="specialists/:id" element={<SpecialistPage />} />
-            <Route path="about" element={<AboutUsPage />} /> */}
-
             <Route path='*' element={<HomePage />} />
           </Route>
         </Routes>

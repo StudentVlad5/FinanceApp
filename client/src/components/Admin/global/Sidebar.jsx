@@ -143,31 +143,31 @@ const Sidebar = () => {
               setSelected={setSelected}
               className='accounts'
             />
-            {/* <Item
-              title='Manage Category'
-              to='categories'
+            <Item
+              title='Валюти'
+              to='currency'
               icon={<PeopleOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
-              className='categories'
+              className='currency'
             />
-            <Item
+            {/* <Item
               title='Events Information'
               to='events'
               icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
               className='events'
-            />
-            <Item
+            /> */}
+            {/* <Item
               title='Activate event'
               to='activate_events'
               icon={<PlaylistAddOutlined />}
               selected={selected}
               setSelected={setSelected}
               className='activate_events'
-            />
-            <Item
+            /> */}
+            {/* <Item
               title='Orders'
               to='orders'
               icon={<ReceiptOutlinedIcon />}

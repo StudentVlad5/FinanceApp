@@ -2,6 +2,7 @@ const { ValidationError } = require('../../helpers');
 const { Account } = require('../../models');
 
 const createAccount = async (req, res, next) => {
+  console.log(req.body);
   const {
     SCH_ID,
     SCH_NAME,
@@ -19,7 +20,7 @@ const createAccount = async (req, res, next) => {
     SCH_PAYEE,
     SCH_TYPE_PROC,
     SCH_PERIOD,
-    SCH_PERIOD_NACH_PRO,
+    SCH_PERIOD_NACH_PROC,
     SCH_DATE_CREDIT,
     SCH_KOM_MES,
     SCH_W,
@@ -48,7 +49,7 @@ const createAccount = async (req, res, next) => {
       SCH_PAYEE,
       SCH_TYPE_PROC,
       SCH_PERIOD,
-      SCH_PERIOD_NACH_PRO,
+      SCH_PERIOD_NACH_PROC,
       SCH_DATE_CREDIT,
       SCH_KOM_MES,
       SCH_W,
@@ -59,9 +60,16 @@ const createAccount = async (req, res, next) => {
       SCH_SYNC,
       SCH_HIDE,
     });
-    res.status(200).json(createNewAccount);
+    console.log('createNewAccount', createNewAccount);
+    res.status(200).json({
+      success: true,
+      data: createNewAccount,
+    });
   } catch (err) {
-    throw new ValidationError('Bad request (invalid request body)');
+    console.error(err); // для логів
+    res
+      .status(400)
+      .json({ success: false, message: err.message || 'Something went wrong' });
   }
 };
 

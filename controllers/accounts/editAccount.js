@@ -3,7 +3,7 @@ const { Account } = require('../../models');
 
 const editAccount = async (req, res, next) => {
   const {
-    nSCH_ID,
+    SCH_ID,
     SCH_NAME,
     SCH_GROUP,
     SCH_CUR,

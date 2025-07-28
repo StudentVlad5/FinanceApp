@@ -31,9 +31,6 @@ const Topbar = () => {
     setOpenMenu(false);
   };
 
-  console.log('openChangePassword', openChangePassword);
-  console.log('setOpenChangePassword', setOpenChangePassword);
-
   return (
     <Box display='flex' justifyContent='end' p={2}>
       <Box display='flex'>
