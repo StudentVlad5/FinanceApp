@@ -1,1 +1,1 @@
-export const getAllAccounts = (state) => state.accounts.items;
+export const getAccounts = (state) => state.accounts.items;

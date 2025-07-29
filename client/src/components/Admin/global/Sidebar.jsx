@@ -144,6 +144,22 @@ const Sidebar = () => {
               className='accounts'
             />
             <Item
+              title='Групи рахунків'
+              to='group'
+              icon={<ContactsOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+              className='group'
+            />
+            <Item
+              title='Типи рахунків'
+              to='types'
+              icon={<PlaylistAddOutlined />}
+              selected={selected}
+              setSelected={setSelected}
+              className='types'
+            />
+            <Item
               title='Валюти'
               to='currency'
               icon={<PeopleOutlinedIcon />}
@@ -151,30 +167,6 @@ const Sidebar = () => {
               setSelected={setSelected}
               className='currency'
             />
-            {/* <Item
-              title='Events Information'
-              to='events'
-              icon={<ContactsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-              className='events'
-            /> */}
-            {/* <Item
-              title='Activate event'
-              to='activate_events'
-              icon={<PlaylistAddOutlined />}
-              selected={selected}
-              setSelected={setSelected}
-              className='activate_events'
-            /> */}
-            {/* <Item
-              title='Orders'
-              to='orders'
-              icon={<ReceiptOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-              className='orders'
-            /> */}
           </Box>
         </Menu>
       </ProSidebar>

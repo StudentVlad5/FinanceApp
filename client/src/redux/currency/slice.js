@@ -42,7 +42,7 @@ const currencySlice = createSlice({
 
       // Create
       .addCase(createCurrency.fulfilled, (state, action) => {
-        state.items.push(action.payload);
+        state.items.push(action.payload.data ?? action.payload);
       })
 
       // Edit

@@ -1,1 +1,1 @@
-export const getAllCurency = (state) => state.currency.items;
+export const getCurencies = (state) => state.currency.items;

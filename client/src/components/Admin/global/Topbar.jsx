@@ -17,7 +17,7 @@ import { useProject } from '../../../context/ProjectContext';
 const Topbar = () => {
   const dispatch = useDispatch();
   const [openMenu, setOpenMenu] = useState(false);
-  const { openChangePassword, setOpenChangePassword } = useProject();
+  const { setOpenChangePassword } = useProject();
   const anchorRef = useRef(null);
 
   const handleToggle = () => {

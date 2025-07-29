@@ -1,7 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const { errorHandler } = require('./helpers');
-const { routerAuth, routerAccouns, routerCurrency } = require('./routes');
+const {
+  routerAuth,
+  routerAccouns,
+  routerCurrency,
+  routerGroup,
+  routerTypes,
+} = require('./routes');
 
 const app = express();
 app.use(cors());
@@ -20,6 +26,8 @@ app.use('/uploads', express.static(`${__dirname}/images/avatars`));
 app.use('/api/auth', routerAuth);
 app.use('/api/accounts', routerAccouns);
 app.use('/api/currency', routerCurrency);
+app.use('/api/group', routerGroup);
+app.use('/api/types', routerTypes);
 
 app.use((req, res) => {
   console.log('!!!!! START APP (req, res) !!!!!!');

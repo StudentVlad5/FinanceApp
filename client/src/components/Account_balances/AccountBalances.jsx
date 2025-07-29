@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { TextField, Grid, Box, Typography } from '@mui/material';
-import data from "../../helpers/data/REESTR.json";
-import nameAccount from "../../helpers/data/SCHETA.json";
+import data from '../../helpers/data/REESTR.json';
+import nameAccount from '../../helpers/data/SCHETA.json';
 
 const AccountBalances = () => {
   // Функція для сумування даних по RE_SCH_ID
   const sumById = (data) => {
     const result = [];
 
-    data.forEach(item => {
+    data.forEach((item) => {
       // Переконуємося, що ці значення числові
-      const money = Math.round((+item.RE_MONEY * (+item.RE_KURS || 1)) * 100) / 100 || 0;
+      const money = Math.round(+item.RE_MONEY * (+item.RE_KURS || 1) * 100) / 100 || 0;
 
-      let existing = result.find(obj => obj.RE_SCH_ID === item.RE_SCH_ID);
+      let existing = result.find((obj) => obj.RE_SCH_ID === item.RE_SCH_ID);
       if (existing) {
         // Додаємо до існуючого значення
         existing.RE_MONEY += money;
@@ -30,15 +30,17 @@ const AccountBalances = () => {
     }
 
     // отримуємо назву рахунку
-    result.forEach(it => {
-      const perem = nameAccount.find(item => item.SCH_ID === it.RE_SCH_ID);
-      if (perem) { it.SCH_NAME = perem.SCH_NAME; }
+    result.forEach((it) => {
+      const perem = nameAccount.find((item) => item.SCH_ID === it.RE_SCH_ID);
+      if (perem) {
+        it.SCH_NAME = perem.SCH_NAME;
+      }
     });
 
     return result.map((row, index) => ({
       ...row,
       id: row.RE_SCH_ID || index + 1,
-      RE_MONEY: Math.round(row.RE_MONEY * 100)/100, 
+      RE_MONEY: Math.round(row.RE_MONEY * 100) / 100,
     }));
   };
 
@@ -72,7 +74,7 @@ const AccountBalances = () => {
 
   return (
     <Box sx={{ padding: 2 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant='h6' gutterBottom>
         Таблиця з сумами за RE_SCH_ID
       </Typography>
 
@@ -80,8 +82,8 @@ const AccountBalances = () => {
       <Grid container spacing={2} sx={{ marginBottom: 2 }}>
         <Grid item xs={12} sm={6}>
           <TextField
-            label="Пошук"
-            variant="outlined"
+            label='Пошук'
+            variant='outlined'
             fullWidth
             value={search}
             onChange={handleSearch}
@@ -90,7 +92,7 @@ const AccountBalances = () => {
       </Grid>
 
       {/* Таблиця MUI DataGrid */}
-      <div style={{ height: 400, width: '100%' }}>
+      <div style={{ height: 1000, width: '100%' }}>
         <DataGrid
           rows={filteredRows}
           columns={columns}
@@ -103,9 +105,7 @@ const AccountBalances = () => {
 
       {/* Підсумок */}
       <Box sx={{ marginTop: 2 }}>
-        <Typography variant="h6">
-          Загальний підсумок: {roundedTotalMoney}
-        </Typography>
+        <Typography variant='h6'>Загальний підсумок: {roundedTotalMoney}</Typography>
       </Box>
     </Box>
   );

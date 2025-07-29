@@ -10,6 +10,8 @@ import { SharedLayout } from 'components/SharedLayout/SharedLayout';
 import AccountBalances from './Account_balances/AccountBalances';
 import Accounts from './Accounts/Accounts';
 import Currency from './Currency/Currency';
+import Group from './Group/Group';
+import Types from './Types/Types';
 
 export const App = () => {
   const dispatch = useDispatch();
@@ -45,6 +47,14 @@ export const App = () => {
               <Route
                 path='accounts'
                 element={<PrivateRoute redirectTo='/login' component={<Accounts />} />}
+              />
+              <Route
+                path='group'
+                element={<PrivateRoute redirectTo='/login' component={<Group />} />}
+              />
+              <Route
+                path='types'
+                element={<PrivateRoute redirectTo='/login' component={<Types />} />}
               />
               <Route
                 path='currency'

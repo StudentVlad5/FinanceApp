@@ -7,9 +7,9 @@ const deleteCurrency = async (req, res, next) => {
     if (сurrency.deletedCount === 0) {
       return res.status(400).json({ message: `Bad request (невірне id)` });
     }
-    return res.status(204).json({ message: 'No Content' });
+    return res.status(204).json({ message: 'Відсутній контент' });
   } catch (e) {
-    return res.status(400).json({ message: '`Bad request (відсутнє id )' });
+    return res.status(400).json({ message: '`Bad request (відсутнє id)' });
   }
 };
 module.exports = deleteCurrency;

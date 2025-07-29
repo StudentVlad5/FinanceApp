@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getAllCurrencies,
@@ -14,6 +14,7 @@ import AddTaskIcon from '@mui/icons-material/AddTask';
 
 const Currency = () => {
   const dispatch = useDispatch();
+
   const { items: currencies, isLoading } = useSelector((state) => state.currency);
   const [add, setAdd] = useState(false);
   const [search, setSearch] = useState('');
@@ -28,10 +29,6 @@ const Currency = () => {
     CUR_HIGH: '',
     CUR_UPDATE: '',
   });
-
-  useEffect(() => {
-    dispatch(getAllCurrencies());
-  }, [dispatch]);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
@@ -64,7 +61,11 @@ const Currency = () => {
 
   const handleEdit = (row) => {
     if (row._id)
-      dispatch(editCurrency({ id: row._id, data: row })).then(dispatch(getAllCurrencies()));
+      dispatch(editCurrency({ id: row._id, data: row })).then(
+        setTimeout(() => {
+          dispatch(getAllCurrencies());
+        }, 500),
+      );
   };
 
   const filteredRows = currencies.filter((row) =>

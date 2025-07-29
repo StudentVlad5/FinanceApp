@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getAllAccounts,
@@ -6,8 +6,11 @@ import {
   deleteAccount,
   editAccount,
 } from '../../redux/accounts/operations';
+import { getCurencies } from '../../redux/currency/selectors';
+import { getGroup } from '../../redux/group/selectors';
+import { getTypes } from '../../redux/types/selectors';
 
-import { Box, Button, Grid, TextField, Typography } from '@mui/material';
+import { Box, Button, Grid, TextField, Typography, MenuItem } from '@mui/material';
 
 import { DataGrid } from '@mui/x-data-grid';
 import AddTaskIcon from '@mui/icons-material/AddTask';
@@ -45,9 +48,39 @@ const Accounts = () => {
     SCH_HIDE: '',
   });
 
-  useEffect(() => {
-    dispatch(getAllAccounts());
-  }, [dispatch]);
+  // отримуємо словник з назвами валюіти
+  const listCurrency = useSelector(getCurencies);
+  const newListOfNameCurrences = Array.isArray(listCurrency)
+    ? listCurrency.map((it) => ({ CUR_ID: it?.CUR_ID, CUR_NAME: it?.CUR_NAME }))
+    : [];
+
+  // Створумо мапу валют для швидкого доступу по CUR_ID
+  const currencyMap = newListOfNameCurrences.reduce((acc, cur) => {
+    acc[String(cur.CUR_ID)] = cur.CUR_NAME;
+    return acc;
+  }, {});
+
+  // отримуємо словник з групами рахунків
+  const listGroup = useSelector(getGroup);
+  const newListOfNameGroup = Array.isArray(listGroup)
+    ? listGroup.map((it) => ({ SCHG_ID: it?.SCHG_ID, SCHG_NAME: it?.SCHG_NAME }))
+    : [];
+
+  // Створумо мапу групи для швидкого доступу по SCHG_ID
+  const groupMap = newListOfNameGroup.reduce((acc, gr) => {
+    acc[String(gr.SCHG_ID)] = gr.SCHG_NAME;
+    return acc;
+  }, {});
+
+  // Створумо мапу типів для швидкого доступу по TPSCH_ID
+  const listTypes = useSelector(getTypes);
+  const typesMap = Array.isArray(listTypes)
+    ? listTypes.reduce((acc, type) => {
+        acc[String(type.TPSCH_ID)] = type.TPSCH_NAME;
+        return acc;
+      }, {})
+    : {};
+
   const handleSearch = (e) => {
     setSearch(e.target.value);
   };
@@ -95,9 +128,11 @@ const Accounts = () => {
 
   const handleEdit = (row) => {
     if (row._id)
-      dispatch(editAccount({ id: row._id, data: row })).then(() => {
-        dispatch(getAllAccounts()); // форсуємо оновлення persist
-      });
+      dispatch(editAccount({ id: row._id, data: row })).then(
+        setTimeout(() => {
+          dispatch(getAllAccounts());
+        }, 500),
+      );
   };
 
   let filteredRows = [];
@@ -112,8 +147,96 @@ const Accounts = () => {
   const columns = [
     { field: 'SCH_ID', headerName: 'ID', width: 100 },
     { field: 'SCH_NAME', headerName: 'Назва рахунку', width: 200, editable: true },
-    { field: 'SCH_CUR', headerName: 'Валюта рахунку', width: 100, editable: true },
-    { field: 'SCH_TYPE', headerName: 'Тип рахунку', width: 150, editable: true },
+    {
+      field: 'SCH_GROUP',
+      headerName: 'Група рахунку',
+      width: 200,
+      editable: true,
+      // показуємо назву групи, а не код
+      valueGetter: (params) => {
+        return groupMap[String(params)] || params.value;
+      },
+      // поле редагування - select зі списком групи
+      renderEditCell: (params) => (
+        <TextField
+          select
+          value={params.value || ''}
+          onChange={(e) => {
+            params.api.setEditCellValue(
+              { id: params.id, field: params.field, value: e.target.value },
+              e,
+            );
+          }}
+          fullWidth
+        >
+          {newListOfNameGroup.map((group) => (
+            <MenuItem key={group.SCHG_ID} value={group.SCHG_ID}>
+              {group.SCHG_NAME}
+            </MenuItem>
+          ))}
+        </TextField>
+      ),
+    },
+    {
+      field: 'SCH_CUR',
+      headerName: 'Валюта рахунку',
+      width: 150,
+      editable: true,
+      // показуємо назву валюти, а не код
+      valueGetter: (params) => {
+        return currencyMap[String(params)] || params.value;
+      },
+      // поле редагування - select зі списком валют
+      renderEditCell: (params) => (
+        <TextField
+          select
+          value={params.value || ''}
+          onChange={(e) => {
+            params.api.setEditCellValue(
+              { id: params.id, field: params.field, value: e.target.value },
+              e,
+            );
+          }}
+          fullWidth
+        >
+          {newListOfNameCurrences.map((currency) => (
+            <MenuItem key={currency.CUR_ID} value={currency.CUR_ID}>
+              {currency.CUR_NAME}
+            </MenuItem>
+          ))}
+        </TextField>
+      ),
+    },
+    {
+      field: 'SCH_TYPE',
+      headerName: 'Тип рахунку',
+      width: 150,
+      editable: true,
+      // показуємо назву групи, а не код
+      valueGetter: (params) => {
+        return typesMap[String(params)] || params.value;
+      },
+      // поле редагування - select зі списком nипу
+      renderEditCell: (params) => (
+        <TextField
+          select
+          value={params.value || ''}
+          onChange={(e) => {
+            params.api.setEditCellValue(
+              { id: params.id, field: params.field, value: e.target.value },
+              e,
+            );
+          }}
+          fullWidth
+        >
+          {listTypes.map((type) => (
+            <MenuItem key={type.TPSCH_ID} value={type.TPSCH_ID}>
+              {type.TPSCH_NAME}
+            </MenuItem>
+          ))}
+        </TextField>
+      ),
+    },
     { field: 'SCH_BANK_NAME', headerName: 'Банк рахунку', width: 150, editable: true },
     {
       field: 'actions',
@@ -145,7 +268,7 @@ const Accounts = () => {
   ];
 
   return (
-    <Box sx={{ padding: 2 }}>
+    <Box sx={{ padding: 2, height: '100vh' }}>
       <Typography variant='h6' gutterBottom>
         Перелік рахунків
       </Typography>
@@ -194,12 +317,19 @@ const Accounts = () => {
           </Grid>
           <Grid item xs={12} sm={2}>
             <TextField
+              select
               label='Валюта рахунку'
               name='SCH_CUR'
               value={newAccount.SCH_CUR}
               onChange={handleChange}
               fullWidth
-            />
+            >
+              {newListOfNameCurrences.map((currency) => (
+                <MenuItem key={currency.CUR_ID} value={currency.CUR_ID}>
+                  {currency.CUR_NAME}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
           <Grid item xs={12} sm={2}>
             <TextField
@@ -227,7 +357,7 @@ const Accounts = () => {
         </Grid>
       )}
       {/* Таблиця з даними */}
-      <div style={{ height: 500, width: '100%' }}>
+      <div style={{ height: 600, width: '100%' }}>
         <DataGrid
           rows={filteredRows}
           columns={columns}

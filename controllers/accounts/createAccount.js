@@ -2,7 +2,6 @@ const { ValidationError } = require('../../helpers');
 const { Account } = require('../../models');
 
 const createAccount = async (req, res, next) => {
-  console.log(req.body);
   const {
     SCH_ID,
     SCH_NAME,
@@ -60,7 +59,7 @@ const createAccount = async (req, res, next) => {
       SCH_SYNC,
       SCH_HIDE,
     });
-    console.log('createNewAccount', createNewAccount);
+
     res.status(200).json({
       success: true,
       data: createNewAccount,
