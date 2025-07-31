@@ -2,11 +2,12 @@ import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { authReducer } from './auth/slice';
-import { reloadSlice } from './reload/slice';
 import { currencyReducer } from './currency/slice';
 import { accountsReducer } from './accounts/slice';
 import { groupReducer } from './group/slice';
 import { typesReducer } from './types/slice';
+import { reloadSlice } from './reload/slice';
+import { reestrReducer } from './reestr/slice';
 
 const authPersistConfig = {
   key: 'auth',
@@ -38,6 +39,12 @@ const typesPersistConfig = {
   whitelist: ['items'],
 };
 
+const reestrPersistConfig = {
+  key: 'reestr',
+  storage,
+  whitelist: ['items'],
+};
+
 export const store = configureStore({
   reducer: {
     auth: persistReducer(authPersistConfig, authReducer),
@@ -45,6 +52,7 @@ export const store = configureStore({
     accounts: persistReducer(accountsPersistConfig, accountsReducer),
     group: persistReducer(groupPersistConfig, groupReducer),
     types: persistReducer(typesPersistConfig, typesReducer),
+    reestr: persistReducer(reestrPersistConfig, reestrReducer),
     reload: reloadSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>

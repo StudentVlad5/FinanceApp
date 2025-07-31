@@ -2,10 +2,10 @@ import { createSlice } from '@reduxjs/toolkit';
 
 export const reloadSlice = createSlice({
   name: 'reload',
-  initialState: {value: false},
+  initialState: { value: false },
   reducers: {
     addReload(state, action) {
-      state.value = action.payload
+      state.value = action.payload;
     },
   },
 });

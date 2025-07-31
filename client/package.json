@@ -41,6 +41,7 @@
     "formik": "^2.4.6",
     "lodash-es": "^4.17.21",
     "modern-normalize": "^3.0.1",
+    "moment": "^2.30.1",
     "notiflix": "^3.2.8",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",

@@ -1,113 +1,150 @@
-import React, { useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { TextField, Grid, Box, Typography } from '@mui/material';
-import data from '../../helpers/data/REESTR.json';
-import nameAccount from '../../helpers/data/SCHETA.json';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getReestr } from '../../redux/reestr/operations';
+import { useNavigate } from 'react-router-dom';
+
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Paper,
+  Box,
+  TextField,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
+const formatMoney = (value) =>
+  value
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+    .replace('.', ',');
 
 const AccountBalances = () => {
-  // Функція для сумування даних по RE_SCH_ID
-  const sumById = (data) => {
-    const result = [];
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { items, isLoading, error } = useSelector((state) => state.reestr);
+  const { items: group } = useSelector((state) => state.group);
+  const { items: accounts } = useSelector((state) => state.accounts);
 
-    data.forEach((item) => {
-      // Переконуємося, що ці значення числові
-      const money = Math.round(+item.RE_MONEY * (+item.RE_KURS || 1) * 100) / 100 || 0;
-
-      let existing = result.find((obj) => obj.RE_SCH_ID === item.RE_SCH_ID);
-      if (existing) {
-        // Додаємо до існуючого значення
-        existing.RE_MONEY += money;
-      } else {
-        // Створюємо новий запис
-        result.push({ RE_SCH_ID: item.RE_SCH_ID, RE_MONEY: money });
-      }
-    });
-
-    // Якщо є запис з RE_SCH_ID === 0, змінюємо його на 99999
-    let correctResult = result.find((obj) => obj.RE_SCH_ID === 0);
-    if (correctResult) {
-      correctResult.RE_SCH_ID = 99999;
-    }
-
-    // отримуємо назву рахунку
-    result.forEach((it) => {
-      const perem = nameAccount.find((item) => item.SCH_ID === it.RE_SCH_ID);
-      if (perem) {
-        it.SCH_NAME = perem.SCH_NAME;
-      }
-    });
-
-    return result.map((row, index) => ({
-      ...row,
-      id: row.RE_SCH_ID || index + 1,
-      RE_MONEY: Math.round(row.RE_MONEY * 100) / 100,
-    }));
-  };
-
-  const [rows, setRows] = useState(sumById(data));
   const [search, setSearch] = useState('');
 
-  // Фільтрування за пошуком
-  const handleSearch = (event) => {
-    setSearch(event.target.value);
-  };
+  useEffect(() => {
+    dispatch(getReestr());
+  }, [dispatch]);
 
-  const filteredRows = rows.filter((row) => {
-    return (
-      row.RE_SCH_ID.toString().includes(search) ||
-      row.RE_MONEY.toString().includes(search) ||
-      row.SCH_NAME.toString().includes(search)
-    );
-  });
+  const groupAccounts = accounts.reduce((acc, account) => {
+    if (!acc[account.SCH_GROUP]) acc[account.SCH_GROUP] = [];
+    acc[account.SCH_GROUP].push(account);
+    return acc;
+  }, {});
 
-  // Обчислення загальної суми
-  const totalMoney = filteredRows.reduce((total, row) => total + row.RE_MONEY, 0);
+  const groupNameById = group.reduce((acc, g) => {
+    acc[g.SCHG_ID] = g.SCHG_NAME;
+    return acc;
+  }, {});
 
-  // Округлення підсумку до двох знаків після коми
-  const roundedTotalMoney = Math.round(totalMoney * 100) / 100;
+  const totalMoneyBySchId = items.reduce((acc, item) => {
+    acc[item._id.schId] = item.totalMoney;
+    return acc;
+  }, {});
 
-  const columns = [
-    { field: 'RE_SCH_ID', headerName: 'ID', width: 150 },
-    { field: 'SCH_NAME', headerName: 'Назва рахунку', width: 350 },
-    { field: 'RE_MONEY', headerName: 'Сума', width: 150 },
-  ];
+  const groupTotals = Object.entries(groupAccounts)
+    .map(([groupId, accountsInGroup]) => {
+      const accountsFiltered = accountsInGroup
+        .map((acc) => ({
+          id: acc.SCH_ID,
+          name: acc.SCH_NAME,
+          money: totalMoneyBySchId[acc.SCH_ID] || 0,
+        }))
+        .filter((acc) => acc.name.toLowerCase().includes(search.toLowerCase()))
+        .sort((a, b) => a.money - b.money);
+
+      const total = accountsFiltered.reduce((sum, acc) => sum + acc.money, 0);
+
+      return {
+        groupId,
+        groupName: groupNameById[groupId] || `Група ${groupId}`,
+        total,
+        accounts: accountsFiltered,
+      };
+    })
+    .filter((group) => group.accounts.length > 0); // Only show groups with matches
+
+  const grandTotal = groupTotals.reduce((sum, group) => sum + group.total, 0);
 
   return (
-    <Box sx={{ padding: 2 }}>
-      <Typography variant='h6' gutterBottom>
-        Таблиця з сумами за RE_SCH_ID
+    <Paper sx={{ padding: 2 }}>
+      <Typography variant='h5' gutterBottom>
+        Реєстр
       </Typography>
 
-      {/* Поле для пошуку */}
-      <Grid container spacing={2} sx={{ marginBottom: 2 }}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label='Пошук'
-            variant='outlined'
-            fullWidth
-            value={search}
-            onChange={handleSearch}
-          />
-        </Grid>
-      </Grid>
+      <TextField
+        label='Пошук по назві рахунку'
+        variant='outlined'
+        size='small'
+        fullWidth
+        margin='normal'
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
-      {/* Таблиця MUI DataGrid */}
-      <div style={{ height: 1000, width: '100%' }}>
-        <DataGrid
-          rows={filteredRows}
-          columns={columns}
-          pageSize={5}
-          rowsPerPageOptions={[5, 10, 20]}
-          disableSelectionOnClick
-          checkboxSelection
-        />
-      </div>
+      {isLoading && <h3>Прошу зачекати, очікуємо на отримання даних</h3>}
+      {error && <h3>Отримали помилку: {error}</h3>}
 
-      {/* Підсумок */}
-      <Box sx={{ marginTop: 2 }}>
-        <Typography variant='h6'>Загальний підсумок: {roundedTotalMoney}</Typography>
-      </Box>
-    </Box>
+      {groupTotals.map((group) => (
+        <Accordion key={group.groupId}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant='subtitle1'>{group.groupName}</Typography>
+            </Box>
+            <Typography variant='subtitle1'>
+              <strong>{formatMoney(group.total)} грн</strong>
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <strong>Рахунок (ID)</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Назва</strong>
+                  </TableCell>
+                  <TableCell align='right'>
+                    <strong>Сума</strong>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {group.accounts.map((acc) => (
+                  <TableRow key={acc.id}>
+                    <TableCell>{acc.id}</TableCell>
+                    <TableCell
+                      onClick={() => navigate(`/admin/account_balances/${acc.id}`)}
+                      sx={{ cursor: 'pointer', color: 'black', textDecoration: 'none' }}
+                    >
+                      {acc.name}
+                    </TableCell>
+                    <TableCell align='right'>{formatMoney(acc.money)} грн</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </AccordionDetails>
+        </Accordion>
+      ))}
+
+      <Typography variant='h6' align='right' sx={{ mt: 3 }}>
+        Загальна сума: <strong>{formatMoney(grandTotal)} грн</strong>
+      </Typography>
+    </Paper>
   );
 };
 

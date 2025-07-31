@@ -3,6 +3,7 @@ const routerAuth = require('./auth');
 const routerCurrency = require('./currency');
 const routerGroup = require('./group');
 const routerTypes = require('./types');
+const routerReestr = require('./reestr');
 
 module.exports = {
   routerAccouns,
@@ -10,4 +11,5 @@ module.exports = {
   routerCurrency,
   routerGroup,
   routerTypes,
+  routerReestr,
 };

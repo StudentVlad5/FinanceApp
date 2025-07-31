@@ -47,6 +47,9 @@ img {
   height: auto;
 }
 
+a {
+  text-decoration: none; 
+}
 //-----modal windows-----//
 #popup-root {
   position: fixed;

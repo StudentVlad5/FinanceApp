@@ -108,6 +108,11 @@ const accountSchema = new Schema({
     default: '',
     trim: true,
   },
+  RE_TRANS_SCH_ID: {
+    type: String,
+    default: '',
+    trim: true,
+  },
   SCH_HIDE: {
     type: String,
     default: 'false',

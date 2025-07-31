@@ -54,7 +54,7 @@ const Group = () => {
       value?.toString().toLowerCase().includes(search.toLowerCase()),
     ),
   );
-  console.log('filteredRows', filteredRows);
+
   const columns = [
     { field: 'SCHG_ID', headerName: 'ID', width: 100 },
     { field: 'SCHG_NAME', headerName: 'Назва групи', width: 200, editable: true },

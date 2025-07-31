@@ -2,6 +2,7 @@ const Account = require('./accounts');
 const Currency = require('./currency');
 const Group = require('./group');
 const Types = require('./types');
+const Reestr = require('./reestr');
 const {
   Users,
   userValidationSchema,
@@ -15,6 +16,7 @@ module.exports = {
   Currency,
   Group,
   Types,
+  Reestr,
   Users,
   userValidationSchema,
   userUpdateValidationSchema,

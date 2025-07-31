@@ -7,6 +7,7 @@ const {
   routerCurrency,
   routerGroup,
   routerTypes,
+  routerReestr,
 } = require('./routes');
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/accounts', routerAccouns);
 app.use('/api/currency', routerCurrency);
 app.use('/api/group', routerGroup);
 app.use('/api/types', routerTypes);
+app.use('/api/reestr', routerReestr);
 
 app.use((req, res) => {
   console.log('!!!!! START APP (req, res) !!!!!!');
