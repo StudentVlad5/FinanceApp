@@ -8,7 +8,8 @@ const getReestrById = async (req, res, next) => {
     const numericId = Number(id);
     if (isNaN(numericId)) throw new Error('Некоректний ID');
 
-    // Витягуємо всі документи
+    // цей код потрібен для переробки даних reestr
+    /* // Витягуємо всі документи
     const allDocs = await Reestr.find();
 
     // Створюємо словник {RE_SCH_ID: [RE_ID]}
@@ -95,17 +96,17 @@ const getReestrById = async (req, res, next) => {
       }
     }
 
-    console.log(`✅ Усього оновлено: ${updatedCount} документів`);
+    console.log(`✅ Усього оновлено: ${updatedCount} документів`); */
 
     // Відправляємо результат (якщо потрібно)
-    // const reestrById = await Reestr.aggregate([
-    //   {
-    //     $match: {
-    //       RE_SCH_ID: numericId,
-    //     },
-    //   },
-    // ]);
-    // res.status(200).json(reestrById);
+    const reestrById = await Reestr.aggregate([
+      {
+        $match: {
+          RE_SCH_ID: numericId,
+        },
+      },
+    ]);
+    res.status(200).json(reestrById);
   } catch (err) {
     throw new ValidationError(err.message);
   }

@@ -8,6 +8,8 @@ import { groupReducer } from './group/slice';
 import { typesReducer } from './types/slice';
 import { reloadSlice } from './reload/slice';
 import { reestrReducer } from './reestr/slice';
+import { contragentsReducer } from './contragents/slice';
+import { tagsReducer } from './tags/slice';
 
 const authPersistConfig = {
   key: 'auth',
@@ -45,6 +47,18 @@ const reestrPersistConfig = {
   whitelist: ['items'],
 };
 
+const contragentsPersistConfig = {
+  key: 'contragents',
+  storage,
+  whitelist: ['items'],
+};
+
+const tagsPersistConfig = {
+  key: 'tags',
+  storage,
+  whitelist: ['items'],
+};
+
 export const store = configureStore({
   reducer: {
     auth: persistReducer(authPersistConfig, authReducer),
@@ -53,6 +67,8 @@ export const store = configureStore({
     group: persistReducer(groupPersistConfig, groupReducer),
     types: persistReducer(typesPersistConfig, typesReducer),
     reestr: persistReducer(reestrPersistConfig, reestrReducer),
+    contragents: persistReducer(contragentsPersistConfig, contragentsReducer),
+    tags: persistReducer(tagsPersistConfig, tagsReducer),
     reload: reloadSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>

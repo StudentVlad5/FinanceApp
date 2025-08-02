@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -14,6 +14,7 @@ import {
   DialogActions,
   TextField,
   Button,
+  TablePagination,
 } from '@mui/material';
 
 import EditIcon from '@mui/icons-material/Edit';
@@ -23,7 +24,7 @@ import moment from 'moment/moment';
 
 const columns = [
   { id: 'RE_ID', label: 'RE_ID' },
-  { id: 'RE_SCH_ID', label: 'RE_SCH_ID' },
+  { id: 'RE_TRANS_SCH_ID', label: 'RE_TRANS_SCH_ID' },
   { id: 'RE_DATE', label: 'RE_DATE' },
   { id: 'RE_KOMENT', label: 'RE_KOMENT' },
   { id: 'RE_PAYE_ID', label: 'RE_PAYE_ID' },
@@ -34,9 +35,45 @@ const columns = [
   { id: 'RE_TAG', label: 'RE_TAG' },
 ];
 
-const ReestrTable = ({ data, onSave, onDelete }) => {
+const ReestrTable = ({ data, onSave, onDelete, setAccountData }) => {
   const [open, setOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+
+  const { items: accounts } = useSelector((state) => state.accounts);
+  const groupAccounts = accounts.reduce((acc, account) => {
+    if (account.SCH_ID) {
+      acc[account.SCH_ID] = account.SCH_NAME;
+    }
+    return acc;
+  }, {});
+
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+
+    const total = data.reduce((acc, account) => {
+      const amount = Number(account.RE_MONEY);
+      return acc + (isNaN(amount) ? 0 : amount);
+    }, 0);
+
+    const accountName = groupAccounts[data[0]?.RE_SCH_ID] || 'Доходи/витрати';
+
+    // Зберігаємо у вигляді масиву об'єктів
+    setAccountData([{ name: accountName, total }]);
+  }, [data, setAccountData, groupAccounts]);
+
+  // пагінація
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // обробник пагінації
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   // Формат виводу
   const displayFormat = 'DD-MM-YYYY';
@@ -49,18 +86,10 @@ const ReestrTable = ({ data, onSave, onDelete }) => {
       .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
       .replace('.', ',');
 
-  const { items: accounts } = useSelector((state) => state.accounts);
-  const groupAccounts = accounts.reduce((acc, account) => {
-    if (account.SCH_ID) {
-      acc[account.SCH_ID] = account.SCH_NAME;
-    }
-    return acc;
-  }, {});
-
   // Стан фільтрів - ключі співпадають з id колонок
   const [filters, setFilters] = useState({
     RE_ID: '',
-    RE_SCH_ID: '',
+    RE_TRANS_SCH_ID: '',
     RE_DATE: '',
     RE_KOMENT: '',
     RE_PAYE_ID: '',
@@ -76,7 +105,7 @@ const ReestrTable = ({ data, onSave, onDelete }) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
-  console.log(groupAccounts);
+
   // Сортування за датою (від новішої)
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => new Date(b.RE_DATE) - new Date(a.RE_DATE));
@@ -86,7 +115,9 @@ const ReestrTable = ({ data, onSave, onDelete }) => {
     ...it,
     RE_MONEY: formatMoney(+it.RE_MONEY),
     RE_DATE: moment(it.RE_DATE).format(displayFormat),
-    RE_SCH_ID: groupAccounts[it.RE_SCH_ID],
+    RE_TRANS_SCH_ID: groupAccounts[it.RE_TRANS_SCH_ID]
+      ? groupAccounts[it.RE_TRANS_SCH_ID]
+      : 'Прибуток/збиток',
     // RE_KVO: groupAccounts[it.RE_KVO],
   }));
 
@@ -105,6 +136,9 @@ const ReestrTable = ({ data, onSave, onDelete }) => {
       });
     });
   }, [filters, formattedData]);
+
+  // обмеження виведення рядків
+  const paginatedData = filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleEditClick = (item) => {
     const originalItem = data.find((el) => el._id === item._id);
@@ -160,7 +194,7 @@ const ReestrTable = ({ data, onSave, onDelete }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredData.map((formattedRow) => (
+            {paginatedData.map((formattedRow) => (
               <TableRow key={formattedRow._id}>
                 {columns.map(({ id }) => (
                   <TableCell key={id}>{formattedRow[id]}</TableCell>
@@ -194,7 +228,15 @@ const ReestrTable = ({ data, onSave, onDelete }) => {
           </TableBody>
         </Table>
       </TableContainer>
-
+      <TablePagination
+        component='div'
+        count={filteredData.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+      />
       {/* Модальне вікно редагування */}
       <Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
         <DialogTitle>Редагувати запис RE_ID: {editingItem?.RE_ID}</DialogTitle>

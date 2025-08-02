@@ -10,6 +10,7 @@ import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import BallotOutlined from '@mui/icons-material/BallotOutlined';
 import PlaylistAddOutlined from '@mui/icons-material/PlaylistAddOutlined';
+import SellIcon from '@mui/icons-material/Sell';
 import { tokens } from 'theme';
 import default_user_img from '../../../images/defaultUserPhoto.jpg';
 import { useSelector } from 'react-redux';
@@ -161,6 +162,22 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
               className='types'
+            />
+            <Item
+              title='Контрагенти'
+              to='contragents'
+              icon={<ReceiptOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+              className='contragents'
+            />
+            <Item
+              title='Теги'
+              to='tags'
+              icon={<SellIcon />}
+              selected={selected}
+              setSelected={setSelected}
+              className='contragents'
             />
             <Item
               title='Валюти'

@@ -4,6 +4,8 @@ const routerCurrency = require('./currency');
 const routerGroup = require('./group');
 const routerTypes = require('./types');
 const routerReestr = require('./reestr');
+const routerContragents = require('./contragents');
+const routerTags = require('./tags');
 
 module.exports = {
   routerAccouns,
@@ -12,4 +14,6 @@ module.exports = {
   routerGroup,
   routerTypes,
   routerReestr,
+  routerContragents,
+  routerTags,
 };

@@ -13,6 +13,8 @@ import Currency from './Currency/Currency';
 import Group from './Group/Group';
 import Types from './Types/Types';
 import AccountDetails from './Account_balances/AccountDetails/AccountDetails';
+import Contragents from './Contragents/Contragents';
+import Tags from './Tags/Tags';
 
 export const App = () => {
   const dispatch = useDispatch();
@@ -64,6 +66,14 @@ export const App = () => {
               <Route
                 path='currency'
                 element={<PrivateRoute redirectTo='/login' component={<Currency />} />}
+              />
+              <Route
+                path='contragents'
+                element={<PrivateRoute redirectTo='/login' component={<Contragents />} />}
+              />
+              <Route
+                path='tags'
+                element={<PrivateRoute redirectTo='/login' component={<Tags />} />}
               />
             </Route>
             <Route

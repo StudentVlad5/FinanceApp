@@ -12,6 +12,8 @@ import { getAllCurrencies } from '../../redux/currency/operations';
 import { getAllAccounts } from '../../redux/accounts/operations';
 import { getAllGroup } from '../../redux/group/operations';
 import { getAllTypes } from '../../redux/types/operations';
+import { getAllContragents } from '../../redux/contragents/operations';
+import { getAllTags } from '../../redux/tags/operations';
 
 const AdminPage = () => {
   const [isLoading] = useState(false);
@@ -24,6 +26,8 @@ const AdminPage = () => {
     dispatch(getAllAccounts());
     dispatch(getAllGroup());
     dispatch(getAllTypes());
+    dispatch(getAllContragents());
+    dispatch(getAllTags());
   }, [dispatch]);
 
   return (
