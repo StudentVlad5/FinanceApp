@@ -11,6 +11,7 @@ import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import BallotOutlined from '@mui/icons-material/BallotOutlined';
 import PlaylistAddOutlined from '@mui/icons-material/PlaylistAddOutlined';
 import SellIcon from '@mui/icons-material/Sell';
+import CameraRollIcon from '@mui/icons-material/CameraRoll';
 import { tokens } from 'theme';
 import default_user_img from '../../../images/defaultUserPhoto.jpg';
 import { useSelector } from 'react-redux';
@@ -162,6 +163,14 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
               className='types'
+            />
+            <Item
+              title='Категорії'
+              to='categories'
+              icon={<CameraRollIcon />}
+              selected={selected}
+              setSelected={setSelected}
+              className='categories'
             />
             <Item
               title='Контрагенти'

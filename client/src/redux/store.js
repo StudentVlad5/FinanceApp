@@ -10,6 +10,7 @@ import { reloadSlice } from './reload/slice';
 import { reestrReducer } from './reestr/slice';
 import { contragentsReducer } from './contragents/slice';
 import { tagsReducer } from './tags/slice';
+import { categoriesReducer } from './categories/slice';
 
 const authPersistConfig = {
   key: 'auth',
@@ -59,6 +60,12 @@ const tagsPersistConfig = {
   whitelist: ['items'],
 };
 
+const categoriesPersistConfig = {
+  key: 'categories',
+  storage,
+  whitelist: ['items'],
+};
+
 export const store = configureStore({
   reducer: {
     auth: persistReducer(authPersistConfig, authReducer),
@@ -69,6 +76,7 @@ export const store = configureStore({
     reestr: persistReducer(reestrPersistConfig, reestrReducer),
     contragents: persistReducer(contragentsPersistConfig, contragentsReducer),
     tags: persistReducer(tagsPersistConfig, tagsReducer),
+    categories: persistReducer(categoriesPersistConfig, categoriesReducer),
     reload: reloadSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>

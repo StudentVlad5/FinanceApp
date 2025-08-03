@@ -5,6 +5,7 @@ const types = require('./types');
 const reestr = require('./reestr');
 const contragents = require('./contragents');
 const tags = require('./tags');
+const categories = require('./categories');
 const auth = require('./auth');
 
 module.exports = {
@@ -15,5 +16,6 @@ module.exports = {
   reestr,
   contragents,
   tags,
+  categories,
   auth,
 };

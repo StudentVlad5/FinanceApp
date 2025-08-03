@@ -1,14 +1,48 @@
 const { Schema, model } = require('mongoose');
 
 const contragentsSchema = new Schema({
-  CAT0_ID: {
+  PAYEE_ID: {
     type: Number,
     required: true,
   },
-  CAT0_NAME: {
+  PAYEE_HIDE: {
+    type: Number,
+    default: 0,
+  },
+  PAYEE_NAME: {
     type: String,
     required: [true, 'Назва контрагенту обовʼязкова'],
     trim: true,
+  },
+  PAYEE_ADRES: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  PAYEE_CITY: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  PAYEE_TEL: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  PAYEE_SITE: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  PAYEE_KOMENT: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  PAYEE_CON_ID: {
+    type: String,
+    trim: true,
+    default: '',
   },
 });
 

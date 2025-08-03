@@ -6,6 +6,7 @@ const routerTypes = require('./types');
 const routerReestr = require('./reestr');
 const routerContragents = require('./contragents');
 const routerTags = require('./tags');
+const routerCategories = require('./categories');
 
 module.exports = {
   routerAccouns,
@@ -16,4 +17,5 @@ module.exports = {
   routerReestr,
   routerContragents,
   routerTags,
+  routerCategories,
 };

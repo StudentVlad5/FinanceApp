@@ -15,6 +15,7 @@ import Types from './Types/Types';
 import AccountDetails from './Account_balances/AccountDetails/AccountDetails';
 import Contragents from './Contragents/Contragents';
 import Tags from './Tags/Tags';
+import Categories from './Categories/Categories';
 
 export const App = () => {
   const dispatch = useDispatch();
@@ -70,6 +71,10 @@ export const App = () => {
               <Route
                 path='contragents'
                 element={<PrivateRoute redirectTo='/login' component={<Contragents />} />}
+              />
+              <Route
+                path='categories'
+                element={<PrivateRoute redirectTo='/login' component={<Categories />} />}
               />
               <Route
                 path='tags'

@@ -1,33 +1,26 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  getAllContragents,
-  createContragent,
-  deleteContragent,
-  editContragent,
-} from '../../redux/contragents/operations';
+  getAllCategories,
+  createCategory,
+  deleteCategory,
+  editCategory,
+} from '../../redux/categories/operations';
 
 import { Box, Button, Grid, TextField, Typography } from '@mui/material';
 
 import { DataGrid } from '@mui/x-data-grid';
 import AddTaskIcon from '@mui/icons-material/AddTask';
 
-const Contragents = () => {
+const Categories = () => {
   const dispatch = useDispatch();
 
-  const { items: contragents, isLoading } = useSelector((state) => state.contragents);
+  const { items: categories, isLoading } = useSelector((state) => state.categories);
   const [add, setAdd] = useState(false);
   const [search, setSearch] = useState('');
-  const [newContragent, setNewContragent] = useState({
-    PAYEE_ID: '',
-    PAYEE_NAME: '',
-    PAYEE_ADRES: '',
-    PAYEE_CITY: '',
-    PAYEE_TEL: '',
-    PAYEE_SITE: '',
-    PAYEE_KOMENT: '',
-    PAYEE_HIDE: '',
-    PAYEE_CON_ID: '',
+  const [newCategory, setNewCategory] = useState({
+    CAT0_ID: '',
+    CAT0_NAME: '',
   });
 
   const handleSearch = (e) => {
@@ -35,48 +28,41 @@ const Contragents = () => {
   };
 
   const handleChange = (e) => {
-    setNewContragent({ ...newContragent, [e.target.name]: e.target.value });
+    setNewCategory({ ...newCategory, [e.target.name]: e.target.value });
   };
 
-  const handleAddContragent = () => {
-    if (newContragent.CAT0_ID.trim() !== '') {
-      dispatch(createContragent(newContragent));
-      setNewContragent({
-        PAYEE_ID: '',
-        PAYEE_NAME: '',
-        PAYEE_ADRES: '',
-        PAYEE_CITY: '',
-        PAYEE_TEL: '',
-        PAYEE_SITE: '',
-        PAYEE_KOMENT: '',
-        PAYEE_HIDE: '',
-        PAYEE_CON_ID: '',
+  const handleAddCategory = () => {
+    if (newCategory.CAT0_ID.trim() !== '') {
+      dispatch(createCategory(newCategory));
+      setNewCategory({
+        CAT0_ID: '',
+        CAT0_NAME: '',
       });
     }
   };
 
   const handleDelete = (id) => {
-    if (id) dispatch(deleteContragent(id));
+    if (id) dispatch(deleteCategory(id));
   };
 
   const handleEdit = (row) => {
     if (row._id)
-      dispatch(editContragent({ id: row._id, data: row })).then(
+      dispatch(editCategory({ id: row._id, data: row })).then(
         setTimeout(() => {
-          dispatch(getAllContragents());
+          dispatch(getAllCategories());
         }, 500),
       );
   };
 
-  const filteredRows = contragents.filter((row) =>
+  const filteredRows = categories.filter((row) =>
     Object.values(row).some((value) =>
       value?.toString().toLowerCase().includes(search.toLowerCase()),
     ),
   );
 
   const columns = [
-    { field: 'PAYEE_ID', headerName: 'ID', width: 100 },
-    { field: 'PAYEE_NAME', headerName: 'Назва контрагенту', width: 300, editable: true },
+    { field: 'CAT0_ID', headerName: 'ID', width: 100 },
+    { field: 'CAT0_NAME', headerName: 'Назва категорії', width: 300, editable: true },
     {
       field: 'actions',
       headerName: 'Дії',
@@ -125,7 +111,7 @@ const Contragents = () => {
         </Grid>
       </Grid>
 
-      {/* Форма для додавання нового контрагенту */}
+      {/* Форма для додавання категорії */}
       <AddTaskIcon sx={{ m: 1.5, cursor: 'pointer' }} onClick={() => setAdd((prev) => !prev)} />
       {add && (
         <Grid container spacing={2} sx={{ marginBottom: 3 }}>
@@ -133,7 +119,7 @@ const Contragents = () => {
             <TextField
               label='ID'
               name='CAT0_ID'
-              value={newContragent.CAT0_ID}
+              value={newCategory.CAT0_ID}
               onChange={handleChange}
               fullWidth
             />
@@ -142,13 +128,13 @@ const Contragents = () => {
             <TextField
               label='Назва контрагенту'
               name='CAT0_NAME'
-              value={newContragent.CAT0_NAME}
+              value={newCategory.CAT0_NAME}
               onChange={handleChange}
               fullWidth
             />
           </Grid>
           <Grid item xs={12}>
-            <Button onClick={handleAddContragent} variant='contained' color='success'>
+            <Button onClick={handleAddCategory} variant='contained' color='success'>
               Додати контрагента
             </Button>
           </Grid>
@@ -172,4 +158,4 @@ const Contragents = () => {
   );
 };
 
-export default Contragents;
+export default Categories;

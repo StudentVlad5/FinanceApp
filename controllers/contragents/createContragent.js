@@ -2,11 +2,28 @@ const { ValidationError } = require('../../helpers');
 const { Contragents } = require('../../models');
 
 const createContragent = async (req, res, next) => {
-  const { CAT0_ID, CAT0_NAME } = req.body;
+  const {
+    PAYEE_ID,
+    PAYEE_NAME,
+    PAYEE_ADRES,
+    PAYEE_CITY,
+    PAYEE_TEL,
+    PAYEE_SITE,
+    PAYEE_KOMENT,
+    PAYEE_HIDE,
+    PAYEE_CON_ID,
+  } = req.body;
   try {
     const createNewContragent = await Contragents.create({
-      CAT0_ID,
-      CAT0_NAME,
+      PAYEE_ID,
+      PAYEE_NAME,
+      PAYEE_ADRES,
+      PAYEE_CITY,
+      PAYEE_TEL,
+      PAYEE_SITE,
+      PAYEE_KOMENT,
+      PAYEE_HIDE,
+      PAYEE_CON_ID,
     });
     console.log('createNewContragent', createNewContragent);
     res.status(200).json({

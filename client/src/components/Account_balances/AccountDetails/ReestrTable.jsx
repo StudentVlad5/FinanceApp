@@ -38,14 +38,35 @@ const columns = [
 const ReestrTable = ({ data, onSave, onDelete, setAccountData }) => {
   const [open, setOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [groupAccounts, setGroupAccounts] = useState([]);
+  const [groupContragents, setGroupContragents] = useState([]);
+  const [groupCategories, setGroupCategories] = useState(null);
 
   const { items: accounts } = useSelector((state) => state.accounts);
-  const groupAccounts = accounts.reduce((acc, account) => {
-    if (account.SCH_ID) {
-      acc[account.SCH_ID] = account.SCH_NAME;
+  const { items: categories } = useSelector((state) => state.categories);
+  const { items: contragents } = useSelector((state) => state.contragents);
+
+  useEffect(() => {
+    const createGroupCategories = categories.reduce((acc, category) => {
+      if (category.CAT0_ID) {
+        acc[category.CAT0_ID] = category.CAT0_NAME;
+      }
+      return acc;
+    }, {});
+    if (createGroupCategories) {
+      setGroupCategories(createGroupCategories);
     }
-    return acc;
-  }, {});
+
+    const createGroupContragents = contragents.reduce((acc, contragent) => {
+      if (contragent.PAYEE_ID) {
+        acc[contragent.PAYEE_ID] = contragent.PAYEE_NAME;
+      }
+      return acc;
+    }, {});
+    if (createGroupContragents) {
+      setGroupContragents(createGroupContragents);
+    }
+  }, [categories, contragents]);
 
   useEffect(() => {
     if (!data || data.length === 0) return;
@@ -55,11 +76,18 @@ const ReestrTable = ({ data, onSave, onDelete, setAccountData }) => {
       return acc + (isNaN(amount) ? 0 : amount);
     }, 0);
 
+    const groupAccounts = accounts.reduce((acc, account) => {
+      if (account.SCH_ID) {
+        acc[account.SCH_ID] = account.SCH_NAME;
+      }
+      return acc;
+    }, {});
+    if (groupAccounts) setGroupAccounts(groupAccounts);
     const accountName = groupAccounts[data[0]?.RE_SCH_ID] || 'Доходи/витрати';
 
     // Зберігаємо у вигляді масиву об'єктів
     setAccountData([{ name: accountName, total }]);
-  }, [data, setAccountData, groupAccounts]);
+  }, [accounts, data, setAccountData]);
 
   // пагінація
   const [page, setPage] = useState(0);
@@ -118,7 +146,8 @@ const ReestrTable = ({ data, onSave, onDelete, setAccountData }) => {
     RE_TRANS_SCH_ID: groupAccounts[it.RE_TRANS_SCH_ID]
       ? groupAccounts[it.RE_TRANS_SCH_ID]
       : 'Прибуток/збиток',
-    // RE_KVO: groupAccounts[it.RE_KVO],
+    RE_CAT_ID: groupCategories[it.RE_CAT_ID],
+    RE_PAYE_ID: groupContragents[it.RE_PAYE_ID],
   }));
 
   // Фільтрація даних по всіх фільтрах

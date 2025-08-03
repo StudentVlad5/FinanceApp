@@ -10,6 +10,7 @@ const {
   routerReestr,
   routerContragents,
   routerTags,
+  routerCategories,
 } = require('./routes');
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/types', routerTypes);
 app.use('/api/reestr', routerReestr);
 app.use('/api/contragent', routerContragents);
 app.use('/api/tags', routerTags);
+app.use('/api/category', routerCategories);
 
 app.use((req, res) => {
   console.log('!!!!! START APP (req, res) !!!!!!');
