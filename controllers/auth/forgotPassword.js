@@ -1,6 +1,6 @@
 const { ValidationError } = require('../../helpers');
 const bcrypt = require('bcryptjs');
-const { nanoid } = require('nanoid');
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { Users } = require('../../models');
 const {
@@ -25,7 +25,7 @@ const forgotPassword = async (req, res, next) => {
     }
 
     // 3. Генеруємо новий пароль і хешуємо
-    const newPassword = nanoid(10);
+    const newPassword = crypto.randomBytes(10).toString('hex');
     const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync(10));
 
     // 4. Оновлюємо пароль
