@@ -1,2 +1,0 @@
-"use strict";(self.webpackChunkAddax_CRM=self.webpackChunkAddax_CRM||[]).push([[978],{4978:(e,s,t)=>{t.r(s),t.d(s,{default:()=>r});var d=t(5043),a=t(8617),n=t(5475),o=t(579);const i=()=>(0,o.jsx)(o.Fragment,{children:(0,o.jsx)(n.N_,{to:"admin",children:"To admine page"})}),r=()=>((0,d.useEffect)((()=>{window.scrollTo({top:0,left:0,behavior:"smooth"})}),[]),(0,o.jsxs)(o.Fragment,{children:[(0,o.jsx)(a.k,{title:"Home",description:""}),(0,o.jsx)(i,{})]}))}}]);
-//# sourceMappingURL=978.97467382.chunk.js.map
