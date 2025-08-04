@@ -18,11 +18,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/client/$1"
-    },
-    {
-      "src": "/admin(.*)",
-      "dest": "/client/admin$1"
+      "dest": "/client/index.html"
     }
   ]
 }
