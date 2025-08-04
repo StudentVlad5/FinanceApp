@@ -1,4 +1,4 @@
-export const BASE_URL = 'https://finance-app-rouge-chi.vercel.app/api';
+export const BASE_URL = 'https://finance-app-novosad.vercel.app/api';
 export const BASE_URL_IMG =
   'https://res.cloudinary.com/dfqhj2far/image/upload/v1706095075/bloomskill_event/';
 
