@@ -1,6 +1,7 @@
 {
-  "name": "Addax-CRM",
+  "name": "FinanceApp",
   "version": "0.1.0",
+  "homepage": ".",
   "private": true,
   "main": "index.js",
   "proxy": "http://localhost:3030",
