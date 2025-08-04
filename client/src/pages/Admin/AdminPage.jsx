@@ -14,6 +14,7 @@ import { getAllGroup } from '../../redux/group/operations';
 import { getAllTypes } from '../../redux/types/operations';
 import { getAllContragents } from '../../redux/contragents/operations';
 import { getAllTags } from '../../redux/tags/operations';
+import { getAllCategories } from '../../redux/categories/operations';
 
 const AdminPage = () => {
   const [isLoading] = useState(false);
@@ -28,6 +29,7 @@ const AdminPage = () => {
     dispatch(getAllTypes());
     dispatch(getAllContragents());
     dispatch(getAllTags());
+    dispatch(getAllCategories());
   }, [dispatch]);
 
   return (
