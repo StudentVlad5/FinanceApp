@@ -2,7 +2,6 @@ const { ValidationError } = require('../../helpers');
 const { Reestr } = require('../../models');
 
 const createReestr = async (req, res, next) => {
-  console.log('req.body', req.body);
   const {
     RE_ID,
     RE_SCH_ID,
@@ -23,6 +22,18 @@ const createReestr = async (req, res, next) => {
     RE_USER,
     RE_ATTACH,
   } = req.body;
+
+  let isDuplicate = true;
+
+  while (isDuplicate) {
+    const existing = await Reestr.findOne({ RE_ID });
+    console.log('existing', existing);
+    if (!existing) {
+      isDuplicate = false; // знайшли унікальне значення
+    } else {
+      RE_ID += 1; // пробуємо наступне
+    }
+  }
   try {
     if (RE_TRANS_SCH_ID === -1 || RE_TRANS_SCH_ID === '-1') {
       const createNewReestr = await Reestr.create({
