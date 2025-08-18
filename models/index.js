@@ -6,6 +6,7 @@ const Reestr = require('./reestr');
 const Contragents = require('./contragents');
 const Tags = require('./tags');
 const Categories = require('./categories');
+const CategNames = require('./categnames');
 const {
   Users,
   userValidationSchema,
@@ -23,6 +24,7 @@ module.exports = {
   Contragents,
   Tags,
   Categories,
+  CategNames,
   Users,
   userValidationSchema,
   userUpdateValidationSchema,

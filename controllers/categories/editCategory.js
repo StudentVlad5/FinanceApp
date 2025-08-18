@@ -2,7 +2,7 @@ const { ValidationError } = require('../../helpers');
 const { Categories } = require('../../models');
 
 const editCategory = async (req, res, next) => {
-  const { CAT0_ID, CAT0_NAME } = req.body;
+  const { CAT0_ID, CAT0_NAME, CAT_SUBCATEGORIES } = req.body;
   const { id } = req.params;
   try {
     const newEditCategory = await Categories.findByIdAndUpdate(
@@ -10,6 +10,7 @@ const editCategory = async (req, res, next) => {
       {
         CAT0_ID,
         CAT0_NAME,
+        CAT_SUBCATEGORIES,
       },
     );
     res.status(200).json(newEditCategory);
