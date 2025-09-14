@@ -1,15 +1,21 @@
 const { Categories } = require('../../models');
 
-const deleteCategory = async (req, res, next) => {
-  const { id } = req.params;
+// --- Видалення головної категорії (CAT0) ---
+const deleteCategory = async (req, res) => {
+  const { id } = req.params; // це CAT0_ID
+
   try {
-    const category = await Categories.deleteOne({ _id: id });
-    if (category.deletedCount === 0) {
-      return res.status(400).json({ message: `Bad request (Невірний Id)` });
-    }
-    return res.status(204).json({ message: 'Відсутній контент' });
-  } catch (e) {
-    return res.status(400).json({ message: 'Bad request (відсутнє id)' });
+    const deleted = await Categories.findOneAndDelete({ _id: id });
+    if (!deleted)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Категорія не знайдена' });
+
+    res
+      .status(200)
+      .json({ success: true, message: 'Категорія видалена успішно' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 module.exports = deleteCategory;

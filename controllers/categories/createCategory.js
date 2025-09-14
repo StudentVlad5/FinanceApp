@@ -1,23 +1,23 @@
-const { ValidationError } = require('../../helpers');
 const { Categories } = require('../../models');
+const generateId = require('../../helpers/generateId');
 
-const createCategory = async (req, res, next) => {
-  const { CAT0_ID, CAT0_NAME } = req.body;
+// --- Створити головну категорію (CAT0) ---
+const createCategory = async (req, res) => {
+  const CAT0_ID = await generateId('CAT0');
+  const { CAT0_NAME } = req.body;
   try {
-    const createNewCategory = await Categories.create({
-      CAT0_ID,
-      CAT0_NAME,
-    });
-    console.log('createNewCategory', createNewCategory);
-    res.status(200).json({
-      success: true,
-      data: createNewCategory,
-    });
+    const exists = await Categories.findOne({ CAT0_ID });
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: 'Категорія з таким CAT0_ID вже існує',
+      });
+    }
+
+    const newCategory = await Categories.create({ CAT0_ID, CAT0_NAME });
+    res.status(201).json({ success: true, data: newCategory });
   } catch (err) {
-    console.error(err); // для логів
-    res
-      .status(400)
-      .json({ success: false, message: err.message || 'Something went wrong' });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 

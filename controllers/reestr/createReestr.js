@@ -93,7 +93,7 @@ const createReestr = async (req, res, next) => {
         RE_CAT_ID,
         RE_CAT_ID0,
         RE_CAT_ID1,
-        RE_MONEY,
+        RE_MONEY: -createNewReestr_1.RE_MONEY,
         RE_SUM,
         RE_INCR,
         RE_TRANS_RE: createNewReestr_1.RE_ID,

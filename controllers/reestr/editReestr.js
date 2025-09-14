@@ -49,7 +49,7 @@ const editReestr = async (req, res, next) => {
           RE_CAT_ID,
           RE_CAT_ID0,
           RE_CAT_ID1,
-          RE_MONEY,
+          RE_MONEY: -newEditReestr.RE_MONEY,
           RE_TRANS_RE: newEditReestr.RE_ID,
           RE_TRANS_SCH_ID: newEditReestr.RE_SCH_ID,
           RE_KURS,

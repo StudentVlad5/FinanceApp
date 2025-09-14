@@ -7,6 +7,7 @@ const Contragents = require('./contragents');
 const Tags = require('./tags');
 const Categories = require('./categories');
 const CategNames = require('./categnames');
+const Counter = require('./counter');
 const {
   Users,
   userValidationSchema,
@@ -26,6 +27,7 @@ module.exports = {
   Categories,
   CategNames,
   Users,
+  Counter,
   userValidationSchema,
   userUpdateValidationSchema,
   userEditValidationSchema,

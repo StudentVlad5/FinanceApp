@@ -1,79 +1,120 @@
 const { ValidationError } = require('../../helpers');
 const { Categories } = require('../../models');
-const { Reestr } = require('../../models');
+// const { Reestr } = require('../../models');
 // const { CategNames } = require('../../models');
+
+// let migrationInProgress = false;
 
 const getAllCategories = async (req, res, next) => {
   try {
     const categories = await Categories.find();
     res.status(200).json(categories);
 
+    // if (migrationInProgress) {
+    //   return res
+    //     .status(200)
+    //     .json({ message: 'Міграція вже виконується або завершена' });
+    // }
+    // migrationInProgress = true;
+
     // console.log('Починаємо міграцію...');
-
     // const reestrs = await Reestr.find().lean();
-    // const categoriesOld = await Categories.find().lean();
+    // const categoriesFlat = await Categories.find().lean(); // для імен
+    // const categNames = await CategNames.find().lean(); // для ієрархії
 
-    // const categoryNameMap = new Map(
-    //   categoriesOld.map((c) => [c.CAT0_ID, c.CAT0_NAME]),
-    // );
+    // // --- Створюємо мапу ID -> NAME для всіх ID ---
+    // const nameMap = new Map();
+    // categoriesFlat.forEach((c) => {
+    //   nameMap.set(c.CAT0_ID, c.CAT0_NAME);
+    // });
+    // // Додаємо всі ID з CategNames на випадок відсутніх у Categories
+    // categNames.forEach((c) => {
+    //   [c.CAT_ID0, c.CAT_ID1, c.CAT_ID2, c.CAT_ID3].forEach((id) => {
+    //     if (id && !nameMap.has(id)) {
+    //       nameMap.set(id, 'Без назви');
+    //     }
+    //   });
+    // });
 
-    // const categoryMap = new Map();
+    // // --- Будуємо дерево Categories ---
+    // const treeMap = new Map();
 
-    // for (const item of reestrs) {
-    //   const catId0 = item.RE_CAT_ID0 || null;
-    //   const subCatId1 = item.RE_CAT_ID1 || null;
+    // for (const c of categNames) {
+    //   const { CAT_ID0, CAT_ID1, CAT_ID2, CAT_ID3 } = c;
 
-    //   // Пропускаємо, якщо немає коду категорії
-    //   if (!catId0) continue;
-
-    //   if (!categoryMap.has(catId0)) {
-    //     categoryMap.set(catId0, {
-    //       CAT0_ID: catId0,
-    //       CAT0_NAME: categoryNameMap.get(catId0) || '',
+    //   if (!treeMap.has(CAT_ID0)) {
+    //     treeMap.set(CAT_ID0, {
+    //       CAT0_ID: CAT_ID0,
+    //       CAT0_NAME: nameMap.get(CAT_ID0) || 'Без назви',
     //       CAT_SUBCATEGORIES: [],
     //     });
     //   }
+    //   const lvl0 = treeMap.get(CAT_ID0);
 
-    //   const catEntry = categoryMap.get(catId0);
+    //   if (CAT_ID1) {
+    //     let lvl1 = lvl0.CAT_SUBCATEGORIES.find((s) => s.CAT1_ID === CAT_ID1);
+    //     if (!lvl1) {
+    //       lvl1 = {
+    //         CAT1_ID: CAT_ID1,
+    //         CAT1_NAME: nameMap.get(CAT_ID1) || 'Без назви',
+    //         CAT_SUBCATEGORIES: [],
+    //       };
+    //       lvl0.CAT_SUBCATEGORIES.push(lvl1);
+    //     }
 
-    //   if (
-    //     subCatId1 &&
-    //     !catEntry.CAT_SUBCATEGORIES.some((s) => s.CAT1_ID === subCatId1)
-    //   ) {
-    //     const subName = categoryNameMap.get(subCatId1) || 'Без назви';
-    //     catEntry.CAT_SUBCATEGORIES.push({
-    //       CAT1_ID: subCatId1,
-    //       CAT1_NAME: subName,
-    //     });
+    //     if (CAT_ID2) {
+    //       let lvl2 = lvl1.CAT_SUBCATEGORIES.find((s) => s.CAT2_ID === CAT_ID2);
+    //       if (!lvl2) {
+    //         lvl2 = {
+    //           CAT2_ID: CAT_ID2,
+    //           CAT2_NAME: nameMap.get(CAT_ID2) || 'Без назви',
+    //           CAT_SUBCATEGORIES: [],
+    //         };
+    //         lvl1.CAT_SUBCATEGORIES.push(lvl2);
+    //       }
+
+    //       if (CAT_ID3) {
+    //         let lvl3 = lvl2.CAT_SUBCATEGORIES.find(
+    //           (s) => s.CAT3_ID === CAT_ID3,
+    //         );
+    //         if (!lvl3) {
+    //           lvl3 = {
+    //             CAT3_ID: CAT_ID3,
+    //             CAT3_NAME: nameMap.get(CAT_ID3) || 'Без назви',
+    //           };
+    //           lvl2.CAT_SUBCATEGORIES.push(lvl3);
+    //         }
+    //       }
+    //     }
     //   }
     // }
 
-    // const newCategories = Array.from(categoryMap.values());
-
-    // // Перезапис колекції
+    // // --- Перезаписуємо Categories ---
+    // const newCategories = Array.from(treeMap.values());
     // await Categories.deleteMany({});
     // await Categories.insertMany(newCategories);
+    // console.log('Колекція Categories оновлена.');
 
-    // console.log('Міграція завершена.');
+    // // --- Оновлюємо Reestr: додаємо CAT_ID0..3 ---
+    // for (const item of reestrs) {
+    //   // знаходимо категорію по RE_CAT_ID
+    //   const cat = categNames.find((c) => c.CAT_ID === item.RE_CAT_ID);
 
-    // Цей варіант одним запитом видалить обидва поля у всіх документів у колекції Reestr
-    // console.log('Start remove RE_CAT_ID1');
-    // await Reestr.updateMany({}, { $unset: { CAT_ID1: '', CAT_ID2: '' } });
-
-    // ДЛЯ ОНОВЛЕННЯ ДАНИХ ПО КАТЕГОРІЇ
-    // const categNames = await CategNames.find();
-    // const reestr = await Reestr.find();
-    // const categMap = new Map(categNames.map((c) => [c.CAT_ID, c]));
-    // console.log('Start renew RE_CAT_ID0');
-    // for (const item of reestr) {
-    //   const catData = categMap.get(item.RE_CAT_ID);
-
-    //   item.RE_CAT_ID0 = catData ? catData.CAT_ID0 : 0;
-    //   item.RE_CAT_ID1 = catData ? catData.CAT_ID1 : 0;
-    //   item.RE_CAT_ID2 = catData ? catData.CAT_ID2 : 0;
-    //   await item.save(); // зберігаємо зміни в документ
+    //   await Reestr.updateOne(
+    //     { _id: item._id },
+    //     {
+    //       $set: {
+    //         CAT_ID0: cat ? cat.CAT_ID0 : 0,
+    //         CAT_ID1: cat ? cat.CAT_ID1 : 0,
+    //         CAT_ID2: cat ? cat.CAT_ID2 : 0,
+    //         CAT_ID3: cat ? cat.CAT_ID3 : 0,
+    //       },
+    //     },
+    //   );
     // }
-    // res.json({ message: 'CAT_ID1 та CAT_ID2 успішно оновлені в Reestr' });
+
+    // console.log('Колекція Reestr оновлена з CAT_ID0..3.');
+    // console.log('Міграція завершена.');
   } catch (err) {
     throw new ValidationError(err.message);
   }
