@@ -1,13 +1,20 @@
 const { ValidationError } = require('../../helpers');
 const { Categories } = require('../../models');
 
-const getCategory = async (req, res, next) => {
-  const { id } = req.params;
+// --- Отримати одну категорію ---
+const getCategory = async (req, res) => {
   try {
-    const category = await Categories.find({ _id: id });
-    res.status(200).json(category);
+    const { id } = req.params; // CAT_ID
+    const category = await Categories.findOne({ CAT_ID: Number(id) });
+    if (!category)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Категорія не знайдена' });
+
+    res.status(200).json({ success: true, data: category });
   } catch (err) {
-    throw new ValidationError(err.message);
+    res.status(400).json({ success: false, message: err.message });
   }
 };
+
 module.exports = getCategory;

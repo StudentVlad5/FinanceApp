@@ -1,13 +1,17 @@
 const { Categories } = require('../../models');
 
+// --- Редагувати категорію ---
 const editCategory = async (req, res) => {
-  const { CAT0_ID } = req.params;
-  const { _id, ...updates } = req.body;
   try {
-    const category = await Categories.findOneAndUpdate({ _id }, updates, {
-      new: true,
-      runValidators: true,
-    });
+    const { id } = req.params; // CAT_ID
+    const updates = req.body;
+
+    const category = await Categories.findOneAndUpdate(
+      { CAT_ID: Number(id) },
+      updates,
+      { new: true, runValidators: true },
+    );
+
     if (!category)
       return res
         .status(404)
