@@ -36,18 +36,6 @@ const reestrSchema = new Schema({
     type: Number,
     default: 0,
   },
-  RE_CAT_ID0: {
-    type: Number,
-    default: 0,
-  },
-  RE_CAT_ID1: {
-    type: Number,
-    default: 0,
-  },
-  RE_CAT_ID2: {
-    type: Number,
-    default: 0,
-  },
   RE_TRANS_RE: {
     type: Number,
     default: 0,
