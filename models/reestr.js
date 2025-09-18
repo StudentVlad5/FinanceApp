@@ -14,7 +14,7 @@ const reestrSchema = new Schema({
   },
   RE_KOMENT: {
     type: String,
-    default: 980, // UAH за ISO
+    default: '',
   },
   RE_PAYE_ID: {
     type: Number,
@@ -45,7 +45,7 @@ const reestrSchema = new Schema({
     default: 0,
   },
   RE_KURS: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 1,
   },
   RE_TAG: {

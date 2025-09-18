@@ -2,8 +2,8 @@ const { ValidationError } = require('../../helpers');
 const { Reestr } = require('../../models');
 
 const createReestr = async (req, res, next) => {
+  let { RE_ID, RE_TAG } = req.body;
   const {
-    RE_ID,
     RE_SCH_ID,
     RE_DATE = Date.now(),
     RE_KOMENT,
@@ -15,7 +15,6 @@ const createReestr = async (req, res, next) => {
     RE_TRANS_RE,
     RE_TRANS_SCH_ID,
     RE_KURS = 1,
-    RE_TAG,
     RE_KVO,
     RE_TAS_ID,
     RE_CLEAR,
@@ -25,6 +24,9 @@ const createReestr = async (req, res, next) => {
 
   let isDuplicate = true;
 
+  if (Array.isArray(RE_TAG)) {
+    RE_TAG = RE_TAG.join(', ');
+  }
   while (isDuplicate) {
     const existing = await Reestr.findOne({ RE_ID });
     console.log('existing', existing);
@@ -35,7 +37,7 @@ const createReestr = async (req, res, next) => {
     }
   }
   try {
-    if (RE_TRANS_SCH_ID === -1 || RE_TRANS_SCH_ID === '-1') {
+    if (RE_TRANS_RE === -1 || RE_TRANS_RE === '-1') {
       const createNewReestr = await Reestr.create({
         RE_ID,
         RE_SCH_ID,
@@ -68,7 +70,7 @@ const createReestr = async (req, res, next) => {
         RE_MONEY,
         RE_SUM,
         RE_INCR,
-        RE_TRANS_RE,
+        RE_TRANS_RE: RE_ID + 1,
         RE_TRANS_SCH_ID,
         RE_KURS,
         RE_TAG,
@@ -85,9 +87,7 @@ const createReestr = async (req, res, next) => {
         RE_KOMENT,
         RE_PAYE_ID,
         RE_CAT_ID,
-        RE_CAT_ID0,
-        RE_CAT_ID1,
-        RE_MONEY: -createNewReestr_1.RE_MONEY,
+        RE_MONEY: -Number(createNewReestr_1.RE_MONEY),
         RE_SUM,
         RE_INCR,
         RE_TRANS_RE: createNewReestr_1.RE_ID,
