@@ -7,7 +7,7 @@
   "proxy": "http://127.0.0.1:5000/",
   "scripts": {
     "start": "node index.js",
-    "server": "nodemon index.js --ignore client",
+    "server": "npx nodemon index.js",
     "client": "npm run start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client \""
   },
@@ -38,6 +38,6 @@
   },
   "devDependencies": {
     "concurrently": "^6.2.0",
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.22"
   }
 }

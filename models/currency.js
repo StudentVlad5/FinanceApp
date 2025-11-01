@@ -44,6 +44,11 @@ const currencySchema = new Schema({
     default: '',
     trim: true,
   },
+  CUR_ACTIVE: {
+    type: Boolean,
+    default: false,
+    trim: true,
+  },
 });
 
 const Currency = model('Currency', currencySchema);

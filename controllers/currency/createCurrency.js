@@ -13,6 +13,7 @@ const createCurrency = async (req, res, next) => {
     CUR_LOW,
     CUR_HIGH,
     CUR_UPDATE,
+    CUR_ACTIVE,
   } = req.body;
   try {
     const createNewCurrency = await Currency.create({
@@ -25,6 +26,7 @@ const createCurrency = async (req, res, next) => {
       CUR_LOW,
       CUR_HIGH,
       CUR_UPDATE,
+      CUR_ACTIVE,
     });
     res.status(200).json(createNewCurrency);
   } catch (err) {

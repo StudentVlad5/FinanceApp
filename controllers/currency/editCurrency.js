@@ -12,6 +12,7 @@ const editCurrency = async (req, res, next) => {
     CUR_LOW,
     CUR_HIGH,
     CUR_UPDATE,
+    CUR_ACTIVE,
   } = req.body;
   const { id } = req.params;
 
@@ -28,6 +29,7 @@ const editCurrency = async (req, res, next) => {
         CUR_LOW,
         CUR_HIGH,
         CUR_UPDATE,
+        CUR_ACTIVE,
       },
       {
         new: true,
