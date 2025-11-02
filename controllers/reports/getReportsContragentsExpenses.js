@@ -5,8 +5,8 @@ const getReportsContragentsExpenses = async (req, res) => {
     const aggregatedData = await Reestr.aggregate([
       {
         $match: {
-          RE_TRANS_RE: { $ne: -1 },
-          $expr: { $gt: [{ $toDouble: '$RE_MONEY' }, 0] },
+          RE_TRANS_RE: -1,
+          $expr: { $lt: [{ $toDouble: '$RE_MONEY' }, 0] }, // <--- Суми МЕНШЕ 0
         },
       },
 
