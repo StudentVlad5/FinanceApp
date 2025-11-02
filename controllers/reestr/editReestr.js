@@ -38,7 +38,7 @@ const editReestr = async (req, res, next) => {
         RE_SCH_ID,
       },
     );
-    if (RE_TRANS_RE !== -1 || RE_TRANS_RE !== '-1') {
+    if (RE_TRANS_SCH_ID !== -1 || RE_TRANS_SCH_ID !== '-1') {
       const newEditReestr_2 = await Reestr.findOneAndUpdate(
         { RE_ID: RE_TRANS_RE },
         {

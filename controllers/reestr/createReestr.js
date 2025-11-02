@@ -12,7 +12,7 @@ const createReestr = async (req, res, next) => {
     RE_MONEY,
     RE_SUM = 0,
     RE_INCR = 0,
-    RE_TRANS_RE,
+    RE_TRANS_RE = -1,
     RE_TRANS_SCH_ID,
     RE_KURS = 1,
     RE_KVO,
@@ -37,7 +37,7 @@ const createReestr = async (req, res, next) => {
     }
   }
   try {
-    if (RE_TRANS_RE === -1 || RE_TRANS_RE === '-1') {
+    if (RE_TRANS_SCH_ID === -1 || RE_TRANS_SCH_ID === '-1') {
       const createNewReestr = await Reestr.create({
         RE_ID,
         RE_SCH_ID,
@@ -48,7 +48,7 @@ const createReestr = async (req, res, next) => {
         RE_MONEY,
         RE_SUM,
         RE_INCR,
-        RE_TRANS_RE: -1,
+        RE_TRANS_RE,
         RE_TRANS_SCH_ID: -1,
         RE_KURS,
         RE_TAG,
