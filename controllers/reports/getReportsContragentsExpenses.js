@@ -6,21 +6,50 @@ const getReportsContragentsExpenses = async (req, res) => {
       {
         $match: {
           RE_TRANS_RE: -1,
-          $expr: { $lt: [{ $toDouble: '$RE_MONEY' }, 0] }, // <--- Суми МЕНШЕ 0
+          $expr: { $lt: [{ $toDouble: '$RE_MONEY' }, 0] }, // Суми МЕНШЕ 0
+        },
+      },
+
+      // Розрахунок суми з урахуванням курсу
+      {
+        $addFields: {
+          calculatedMoney: {
+            // Створюємо нове поле
+            $let: {
+              vars: {
+                money: { $toDouble: '$RE_MONEY' },
+                // Безпечно конвертуємо RE_KURS.
+                // $ifNull обробляє null/відсутні поля, $toDouble - рядки/числа.
+                // Якщо RE_KURS немає, він буде 1.
+                kurs: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
+              },
+              in: {
+                $cond: {
+                  // Множимо, ТІЛЬКИ ЯКЩО kurs не 1 і не 0
+                  if: {
+                    $and: [{ $ne: ['$$kurs', 1] }, { $ne: ['$$kurs', 0] }],
+                  },
+                  then: { $multiply: ['$$money', '$$kurs'] },
+                  else: '$$money', // Інакше, беремо оригінальну суму
+                },
+              },
+            },
+          },
         },
       },
 
       {
         $group: {
           _id: '$RE_PAYE_ID',
-          totalMoney: { $sum: { $toDouble: '$RE_MONEY' } },
+          totalMoney: { $sum: { $abs: '$calculatedMoney' } },
           details: {
             $push: {
               RE_ID: '$RE_ID',
               RE_DATE: '$RE_DATE',
               RE_CAT_ID: '$RE_CAT_ID',
               RE_KOMENT: '$RE_KOMENT',
-              RE_MONEY: { $toDouble: '$RE_MONEY' },
+              // --- ЗМІНА: Додаємо $abs від нового поля 'calculatedMoney' ---
+              RE_MONEY: { $abs: '$calculatedMoney' },
             },
           },
         },
@@ -81,6 +110,7 @@ const getReportsContragentsExpenses = async (req, res) => {
         },
       },
 
+      // Сортування тепер працює коректно, бо totalMoney - додатне число
       { $sort: { totalMoney: -1 } },
     ]);
 
