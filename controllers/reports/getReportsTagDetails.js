@@ -1,43 +1,24 @@
 const { Reestr } = require('../../models');
 
+// (Залишаємо 'toArray' на випадок, якщо він потрібен іншим функціям)
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
 const getReportsTagDetails = async (req, res) => {
   try {
     const {
       tagId, // TG_ID (число, напр. 163) або рядок 'null'
       dateFrom,
-      dateTo,
-      commentSearch,
-      selectedCategories,
-      selectedAccounts,
-      selectedContragents,
-    } = req.query;
+      dateTo, // ❗️ ВИДАЛЕНО: commentSearch, selectedCategories, selectedAccounts, selectedContragents
+    } = req.query; // ----- 1. ЕТАП: Первинний $match (ШВИДКИЙ) ----- // Залишаємо лише базовий фільтр
 
-    // ----- 1. ЕТАП: Первинний $match -----
-    // Фільтруємо ДО всіх складних операцій
     const primaryMatchStage = {
       RE_TRANS_RE: -1,
-    };
-
-    // Фільтр по датах
-    if (dateFrom || dateTo) {
-      primaryMatchStage.RE_DATE = {};
-      if (dateFrom) primaryMatchStage.RE_DATE.$gte = new Date(dateFrom);
-      if (dateTo) primaryMatchStage.RE_DATE.$lte = new Date(dateTo);
-    }
-    // Фільтр по коментарю
-    if (commentSearch) {
-      primaryMatchStage.RE_KOMENT = { $regex: commentSearch, $options: 'i' };
-    }
-
-    // ----- 2. ЕТАП: Ідентифікація Тегів -----
-    // Цей пайплайн тепер виконується на *відфільтрованих* даних
+    }; // ❗️ ВИДАЛЕНО: Вся логіка фільтрації по ID (catIDs, accIDs, conIDs) та commentSearch // ----- 2. ЕТАП: Ідентифікація Тегів (без змін) -----
     const tagIdentificationPipeline = [
-      {
-        $unwind: {
-          path: '$RE_TAG',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
+      { $unwind: { path: '$RE_TAG', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'tags',
@@ -46,45 +27,29 @@ const getReportsTagDetails = async (req, res) => {
           as: 'tagInfo',
         },
       },
-      {
-        $unwind: {
-          path: '$tagInfo',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $addFields: {
-          validTagId: '$tagInfo.TG_ID', // буде 163 або null
-        },
-      },
-      // $group, який раніше падав, тепер обробляє набагато менше даних
+      { $unwind: { path: '$tagInfo', preserveNullAndEmptyArrays: true } },
+      { $addFields: { validTagId: '$tagInfo.TG_ID' } },
       {
         $group: {
-          _id: '$_id', // Групуємо по ID проводки
-          doc: { $first: '$$ROOT' }, // Беремо оригінальний документ
-          validTagIds: { $addToSet: '$validTagId' }, // Збираємо масив [163, null]
+          _id: '$_id',
+          doc: { $first: '$$ROOT' },
+          validTagIds: { $addToSet: '$validTagId' },
         },
       },
       {
         $replaceRoot: {
-          newRoot: {
-            $mergeObjects: ['$doc', { validTagIds: '$validTagIds' }],
-          },
+          newRoot: { $mergeObjects: ['$doc', { validTagIds: '$validTagIds' }] },
         },
       },
-    ];
+    ]; // ----- 3. ЕТАП: Фільтрація по Тегу (без змін) -----
 
-    // ----- 3. ЕТАП: Фільтрація по Тегу -----
     const tagMatchStage = {};
     if (tagId === 'null') {
-      // "Без тегу / Нерозпізнані"
       tagMatchStage.validTagIds = [null];
     } else {
-      // "Конкретний тег" (переконуємось, що це число)
       tagMatchStage.validTagIds = Number(tagId);
-    }
+    } // ----- 4. ЕТАП: Збагачення (Lookups) (без змін) ----- // (Вони потрібні, щоб фронтенд міг фільтрувати по іменах)
 
-    // ----- 4. ЕТАП: Збагачення (Lookups) -----
     const graphLookupStage = {
       $graphLookup: {
         from: 'categories',
@@ -109,16 +74,29 @@ const getReportsTagDetails = async (req, res) => {
         foreignField: 'PAYEE_ID',
         as: 'contragentInfo',
       },
-    };
+    }; // ----- 5. ЕТАП: Розрахункові Поля (AddFields) (без змін) ----- // (Потрібні 'calculatedMoney', 'categoryName', 'accountName', 'contragentName')
 
-    // ----- 5. ЕТАП: Розрахункові Поля (AddFields) -----
     const addFieldsStage = {
       $addFields: {
         calculatedMoney: {
           $let: {
             vars: {
-              money: { $toDouble: '$RE_MONEY' },
-              kurs: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
+              money: {
+                $convert: {
+                  input: '$RE_MONEY',
+                  to: 'double',
+                  onError: 0.0,
+                  onNull: 0.0,
+                },
+              },
+              kurs: {
+                $convert: {
+                  input: '$RE_KURS',
+                  to: 'double',
+                  onError: 1.0,
+                  onNull: 1.0,
+                },
+              },
             },
             in: {
               $cond: {
@@ -149,41 +127,52 @@ const getReportsTagDetails = async (req, res) => {
           $ifNull: [{ $arrayElemAt: ['$contragentInfo.PAYEE_NAME', 0] }, 'N/A'],
         },
       },
-    };
+    }; // ----- ЗБИРАЄМО ПАЙПЛАЙН -----
 
-    // ----- 6. ЕТАП: Вторинний $match (по розрахованих полях) -----
-    const secondaryMatchStage = {};
-    if (selectedCategories && selectedCategories.length > 0) {
-      secondaryMatchStage.categoryName = { $in: selectedCategories };
-    }
-    if (selectedAccounts && selectedAccounts.length > 0) {
-      secondaryMatchStage.accountName = { $in: selectedAccounts };
-    }
-    if (selectedContragents && selectedContragents.length > 0) {
-      secondaryMatchStage.contragentName = { $in: selectedContragents };
-    }
-
-    // ----- ЗБИРАЄМО ПАЙПЛАЙН -----
     const aggregationPipeline = [
-      { $match: primaryMatchStage }, // 1. Фільтруємо по датах/коментах (швидко)
-      ...tagIdentificationPipeline, // 2. Ідентифікуємо теги (на малих даних)
-      { $match: tagMatchStage }, // 3. Фільтруємо по тегу
-      graphLookupStage, // 4. Збагачуємо
+      { $match: primaryMatchStage }, // 1.
+    ]; // ----- ЕТАП ФІЛЬТРАЦІЇ ПО ДАТАХ (залишається на бекенді) -----
+
+    aggregationPipeline.push({
+      $addFields: {
+        convertedDate: {
+          $dateFromString: {
+            dateString: '$RE_DATE',
+            format: '%Y-%m-%d',
+            onError: null,
+          },
+        },
+      },
+    });
+
+    const dateMatchFilter = {};
+    if (dateFrom) {
+      dateMatchFilter.$gte = new Date(dateFrom + 'T00:00:00.000Z');
+    }
+    if (dateTo) {
+      const endDate = new Date(dateTo + 'T00:00:00.000Z');
+      endDate.setUTCDate(endDate.getUTCDate() + 1);
+      dateMatchFilter.$lt = endDate;
+    }
+    if (Object.keys(dateMatchFilter).length > 0) {
+      aggregationPipeline.push({
+        $match: { convertedDate: dateMatchFilter },
+      });
+    } // ----- КІНЕЦЬ ЕТАПУ ФІЛЬТРАЦІЇ ПО ДАТАХ ----- // Додаємо решту пайплайну
+    aggregationPipeline.push(
+      ...tagIdentificationPipeline, // 2.
+      { $match: tagMatchStage }, // 3.
+      graphLookupStage, // 4.
       lookupAccountStage,
       lookupContragentStage,
-      addFieldsStage, // 5. Розраховуємо поля
-      { $match: secondaryMatchStage }, // 6. Фільтруємо по назвах
-      { $sort: { RE_DATE: -1 } },
-    ];
+      addFieldsStage, // 5. // { $sort } -- видалено
+    ); // ----- ВИКОНАННЯ -----
 
-    // .allowDiskUse(true) залишаємо про всяк випадок
-    const details = await Reestr.aggregate(aggregationPipeline).allowDiskUse(
-      true,
-    );
+    const details = await Reestr.aggregate(aggregationPipeline);
 
     res.status(200).json(details);
   } catch (err) {
-    console.error(err);
+    console.error('Помилка при завантаженні деталей:', err);
     res.status(500).json({ message: 'Помилка при завантаженні деталей' });
   }
 };
