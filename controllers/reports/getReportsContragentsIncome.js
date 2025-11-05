@@ -48,6 +48,7 @@ const getReportsContragentsIncome = async (req, res) => {
               RE_DATE: '$RE_DATE',
               RE_CAT_ID: '$RE_CAT_ID',
               RE_KOMENT: '$RE_KOMENT',
+              RE_SCH_ID: '$RE_SCH_ID',
               RE_MONEY: '$calculatedMoney',
             },
           },

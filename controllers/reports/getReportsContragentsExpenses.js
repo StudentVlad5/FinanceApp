@@ -48,6 +48,7 @@ const getReportsContragentsExpenses = async (req, res) => {
               RE_DATE: '$RE_DATE',
               RE_CAT_ID: '$RE_CAT_ID',
               RE_KOMENT: '$RE_KOMENT',
+              RE_SCH_ID: '$RE_SCH_ID',
               // --- ЗМІНА: Додаємо $abs від нового поля 'calculatedMoney' ---
               RE_MONEY: { $abs: '$calculatedMoney' },
             },
