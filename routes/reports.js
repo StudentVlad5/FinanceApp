@@ -6,5 +6,6 @@ router.get('/get_contragents_income', ctrl.getReportsContragentsIncome);
 router.get('/get_contragents_expenses', ctrl.getReportsContragentsExpenses);
 router.get('/get_reports_by_tags_summary', ctrl.getReportsByTagsSummary);
 router.get('/get_tag_details', ctrl.getReportsTagDetails);
+router.get('/get_categories_income', ctrl.getReportsCategoriesIncome);
 
 module.exports = routerReports = router;
