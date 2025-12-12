@@ -1,13 +1,13 @@
 const { Reestr } = require('../../models');
 
-const getReportsByCategoriesIncome = async (req, res) => {
+const getReportsCategoriesExpenses = async (req, res) => {
   try {
     const aggregatedData = await Reestr.aggregate([
       // 1. Фільтрація доходів (стандартно)
       {
         $match: {
           RE_TRANS_RE: -1,
-          $expr: { $gt: [{ $toDouble: '$RE_MONEY' }, 0] },
+          $expr: { $lt: [{ $toDouble: '$RE_MONEY' }, 0] },
         },
       },
 
@@ -189,4 +189,4 @@ const getReportsByCategoriesIncome = async (req, res) => {
   }
 };
 
-module.exports = getReportsByCategoriesIncome;
+module.exports = getReportsCategoriesExpenses;
