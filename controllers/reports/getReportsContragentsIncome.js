@@ -3,6 +3,7 @@ const { Reestr } = require('../../models');
 const getReportsContragentsIncome = async (req, res) => {
   try {
     const aggregatedData = await Reestr.aggregate([
+      // 1. Фільтр доходів
       {
         $match: {
           RE_TRANS_RE: -1,
@@ -10,27 +11,22 @@ const getReportsContragentsIncome = async (req, res) => {
         },
       },
 
-      // Розрахунок суми з урахуванням курсу
+      // 2. Розрахунок суми з курсом
       {
         $addFields: {
           calculatedMoney: {
-            // Створюємо нове поле
             $let: {
               vars: {
                 money: { $toDouble: '$RE_MONEY' },
-                // Безпечно конвертуємо RE_KURS.
-                // $ifNull обробляє null/відсутні поля, $toDouble - рядки/числа.
-                // Якщо RE_KURS немає, він буде 1.
                 kurs: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
               },
               in: {
                 $cond: {
-                  // Множимо, ТІЛЬКИ ЯКЩО kurs не 1 і не 0
                   if: {
                     $and: [{ $ne: ['$$kurs', 1] }, { $ne: ['$$kurs', 0] }],
                   },
                   then: { $multiply: ['$$money', '$$kurs'] },
-                  else: '$$money', // Інакше, беремо оригінальну суму
+                  else: '$$money',
                 },
               },
             },
@@ -38,6 +34,7 @@ const getReportsContragentsIncome = async (req, res) => {
         },
       },
 
+      // 3. Групування по контрагенту
       {
         $group: {
           _id: '$RE_PAYE_ID',
@@ -55,7 +52,7 @@ const getReportsContragentsIncome = async (req, res) => {
         },
       },
 
-      // Підтягуємо контрагента
+      // 4. Контрагент
       {
         $lookup: {
           from: 'contragents',
@@ -66,33 +63,116 @@ const getReportsContragentsIncome = async (req, res) => {
       },
       { $unwind: { path: '$contragent', preserveNullAndEmptyArrays: true } },
 
-      // Відкриваємо деталі
+      // 5. Деталі
       { $unwind: '$details' },
 
-      // Рекурсивно будуємо повний шлях категорії
+      // 6. Поточна категорія
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'details.RE_CAT_ID',
+          foreignField: 'CAT_ID',
+          as: 'currentCategory',
+        },
+      },
+      {
+        $unwind: { path: '$currentCategory', preserveNullAndEmptyArrays: true },
+      },
+
+      // 7. Всі батьки
       {
         $graphLookup: {
           from: 'categories',
-          startWith: '$details.RE_CAT_ID',
+          startWith: '$currentCategory.CAT_PARENT_ID',
           connectFromField: 'CAT_PARENT_ID',
           connectToField: 'CAT_ID',
-          as: 'category_hierarchy',
-          depthField: 'level',
+          as: 'ancestors',
         },
       },
 
-      // Створюємо назву категорії через concat
+      // 8. Обʼєднуємо
+      {
+        $addFields: {
+          allCategories: {
+            $cond: [
+              { $ifNull: ['$currentCategory', false] },
+              { $concatArrays: ['$ancestors', ['$currentCategory']] },
+              [],
+            ],
+          },
+        },
+      },
+
+      // 9. Сортуємо по CAT_LEVEL
+      {
+        $addFields: {
+          sortedHierarchy: {
+            $concatArrays: [
+              {
+                $filter: {
+                  input: '$allCategories',
+                  as: 'c',
+                  cond: { $eq: ['$$c.CAT_LEVEL', 0] },
+                },
+              },
+              {
+                $filter: {
+                  input: '$allCategories',
+                  as: 'c',
+                  cond: { $eq: ['$$c.CAT_LEVEL', 1] },
+                },
+              },
+              {
+                $filter: {
+                  input: '$allCategories',
+                  as: 'c',
+                  cond: { $eq: ['$$c.CAT_LEVEL', 2] },
+                },
+              },
+              {
+                $filter: {
+                  input: '$allCategories',
+                  as: 'c',
+                  cond: { $eq: ['$$c.CAT_LEVEL', 3] },
+                },
+              },
+              {
+                $filter: {
+                  input: '$allCategories',
+                  as: 'c',
+                  cond: { $eq: ['$$c.CAT_LEVEL', 4] },
+                },
+              },
+              {
+                $filter: {
+                  input: '$allCategories',
+                  as: 'c',
+                  cond: { $eq: ['$$c.CAT_LEVEL', 5] },
+                },
+              },
+            ],
+          },
+        },
+      },
+
+      // 10. Формуємо рядок категорії
       {
         $addFields: {
           'details.categoryName': {
             $reduce: {
-              input: { $reverseArray: '$category_hierarchy' },
+              input: {
+                $map: {
+                  input: '$sortedHierarchy',
+                  as: 'c',
+                  in: '$$c.CAT_NAME',
+                },
+              },
               initialValue: '',
               in: {
                 $cond: [
                   { $eq: ['$$value', ''] },
-                  '$$this.CAT_NAME',
-                  { $concat: ['$$value', ' → ', '$$this.CAT_NAME'] },
+                  '$$this',
+                  { $concat: ['$$value', ' → ', '$$this'] },
                 ],
               },
             },
@@ -100,7 +180,7 @@ const getReportsContragentsIncome = async (req, res) => {
         },
       },
 
-      // Групуємо назад по контрагенту
+      // 11. Фінальне групування назад по контрагенту
       {
         $group: {
           _id: '$_id',
