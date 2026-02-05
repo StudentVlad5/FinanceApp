@@ -44,7 +44,14 @@ const getReportsCategoriesExpenses = async (req, res) => {
         },
       },
       { $unwind: '$currentCategory' },
-
+      // --- ДОДАНО ТУТ ---
+      // 3.1. Фільтруємо лише прибуткові категорії
+      {
+        $match: {
+          'currentCategory.CAT_TYPE_PROFITABLE': false,
+        },
+      },
+      // -----------------
       // 4. Знаходимо всіх батьків (ancestors)
       {
         $graphLookup: {
@@ -131,17 +138,20 @@ const getReportsCategoriesExpenses = async (req, res) => {
           },
         },
       },
-
       // 8. Розбиваємо на Root та SubPath
       {
         $addFields: {
           rootCategory: { $arrayElemAt: ['$sortedPathNames', 0] },
           subCategoryPath: {
-            $slice: [
-              '$sortedPathNames',
-              1,
-              { $size: '$sortedPathNames' }, // беремо все, що після 0-го елемента
-            ],
+            $cond: {
+              // Якщо в ієрархії більше 1 елемента, беремо хвіст як підкатегорії
+              if: { $gt: [{ $size: '$sortedPathNames' }, 1] },
+              then: {
+                $slice: ['$sortedPathNames', 1, { $size: '$sortedPathNames' }],
+              },
+              // Якщо тільки 1 елемент — це операція в корінь, шлях порожній
+              else: [],
+            },
           },
         },
       },
@@ -151,7 +161,7 @@ const getReportsCategoriesExpenses = async (req, res) => {
         $group: {
           _id: {
             root: '$rootCategory',
-            subPath: '$subCategoryPath',
+            subPath: '$subCategoryPath', // Порожній масив [] тепер теж є ключем групування
           },
           totalMoney: { $sum: '$calculatedMoney' },
           details: {

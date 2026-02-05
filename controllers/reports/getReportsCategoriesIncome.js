@@ -3,7 +3,7 @@ const { Reestr } = require('../../models');
 const getReportsByCategoriesIncome = async (req, res) => {
   try {
     const aggregatedData = await Reestr.aggregate([
-      // 1. Фільтрація доходів (стандартно)
+      // 1. Фільтрація доходів (гроші > 0)
       {
         $match: {
           RE_TRANS_RE: -1,
@@ -11,174 +11,161 @@ const getReportsByCategoriesIncome = async (req, res) => {
         },
       },
 
-      // 2. Розрахунок грошей (без змін)
+      // 2. Розрахунок грошей з урахуванням курсу
       {
         $addFields: {
-          calculatedMoney: {
+          calcMoney: {
             $let: {
               vars: {
                 money: { $toDouble: '$RE_MONEY' },
                 kurs: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
               },
               in: {
-                $cond: {
-                  if: {
-                    $and: [{ $ne: ['$$kurs', 1] }, { $ne: ['$$kurs', 0] }],
-                  },
-                  then: { $multiply: ['$$money', '$$kurs'] },
-                  else: '$$money',
-                },
+                $cond: [
+                  { $and: [{ $ne: ['$$kurs', 1] }, { $ne: ['$$kurs', 0] }] },
+                  { $multiply: ['$$money', '$$kurs'] },
+                  '$$money',
+                ],
               },
             },
           },
         },
       },
 
-      // 3. Знаходимо поточну категорію
+      // 3. ОПТИМІЗАЦІЯ: Попереднє групування за ID категорії
+      // Це "стискає" тисячі транзакцій у кілька десятків груп категорій
+      {
+        $group: {
+          _id: '$RE_CAT_ID',
+          catTotal: { $sum: '$calcMoney' },
+          transDetails: {
+            $push: {
+              RE_ID: '$RE_ID',
+              RE_DATE: '$RE_DATE',
+              RE_KOMENT: '$RE_KOMENT',
+              RE_MONEY: '$calcMoney',
+            },
+          },
+        },
+      },
+
+      // 4. Пошук інформації про категорію
       {
         $lookup: {
           from: 'categories',
-          localField: 'RE_CAT_ID',
+          localField: '_id',
           foreignField: 'CAT_ID',
-          as: 'currentCategory',
+          as: 'catInfo',
         },
       },
-      { $unwind: '$currentCategory' },
+      { $unwind: '$catInfo' },
 
-      // 4. Знаходимо всіх батьків (ancestors)
+      // 5. Фільтрація типів категорій (наприклад, тільки CAT_TYPE_PROFITABLE: false)
+      {
+        $match: {
+          'catInfo.CAT_TYPE_PROFITABLE': false,
+        },
+      },
+
+      // 6. Пошук ієрархії батьків
       {
         $graphLookup: {
           from: 'categories',
-          startWith: '$currentCategory.CAT_PARENT_ID',
+          startWith: '$catInfo.CAT_PARENT_ID',
           connectFromField: 'CAT_PARENT_ID',
           connectToField: 'CAT_ID',
           as: 'ancestors',
         },
       },
 
-      // 5. Об'єднуємо поточну категорію та батьків в один масив "unsortedCats"
-      {
-        $addFields: {
-          unsortedCats: {
-            $concatArrays: ['$ancestors', ['$currentCategory']],
-          },
-        },
-      },
-
-      // 6. БЕЗПЕЧНЕ СОРТУВАННЯ (Без $sort та $unwind)
-      // Ми вручну вибираємо рівні по черзі. Це не навантажує пам'ять.
-      // Припускаємо, що глибина вкладеності не більше 6 рівнів (для бухгалтерії цього зазвичай достатньо).
+      // 7. Сортування ієрархії (від рівня 0 до поточного)
       {
         $addFields: {
           sortedHierarchy: {
-            $concatArrays: [
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 0] },
-                },
+            $let: {
+              vars: { all: { $concatArrays: ['$ancestors', ['$catInfo']] } },
+              in: {
+                $concatArrays: [
+                  {
+                    $filter: {
+                      input: '$$all',
+                      as: 'c',
+                      cond: { $eq: ['$$c.CAT_LEVEL', 0] },
+                    },
+                  },
+                  {
+                    $filter: {
+                      input: '$$all',
+                      as: 'c',
+                      cond: { $eq: ['$$c.CAT_LEVEL', 1] },
+                    },
+                  },
+                  {
+                    $filter: {
+                      input: '$$all',
+                      as: 'c',
+                      cond: { $eq: ['$$c.CAT_LEVEL', 2] },
+                    },
+                  },
+                  {
+                    $filter: {
+                      input: '$$all',
+                      as: 'c',
+                      cond: { $eq: ['$$c.CAT_LEVEL', 3] },
+                    },
+                  },
+                  {
+                    $filter: {
+                      input: '$$all',
+                      as: 'c',
+                      cond: { $eq: ['$$c.CAT_LEVEL', 4] },
+                    },
+                  },
+                ],
               },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 1] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 2] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 3] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 4] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 5] },
-                },
-              },
-            ],
-          },
-        },
-      },
-
-      // 7. Витягуємо імена з відсортованого масиву
-      {
-        $addFields: {
-          sortedPathNames: {
-            $map: {
-              input: '$sortedHierarchy',
-              as: 'item',
-              in: '$$item.CAT_NAME',
             },
           },
         },
       },
 
-      // 8. Розбиваємо на Root та SubPath
+      // 8. Витягуємо лише імена для шляху
       {
         $addFields: {
-          rootCategory: { $arrayElemAt: ['$sortedPathNames', 0] },
-          subCategoryPath: {
-            $slice: [
-              '$sortedPathNames',
-              1,
-              { $size: '$sortedPathNames' }, // беремо все, що після 0-го елемента
+          pathNames: {
+            $map: { input: '$sortedHierarchy', as: 'h', in: '$$h.CAT_NAME' },
+          },
+        },
+      },
+
+      // 9. Розподіл на Корінь та Підшлях
+      {
+        $addFields: {
+          rootName: { $arrayElemAt: ['$pathNames', 0] },
+          subPath: {
+            $cond: [
+              { $gt: [{ $size: '$pathNames' }, 1] },
+              { $slice: ['$pathNames', 1, { $size: '$pathNames' }] },
+              [],
             ],
           },
         },
       },
 
-      // 9. Групування: Root -> Path -> Details
+      // 10. Фінальне збирання структури: Групуємо за кореневою категорією
       {
         $group: {
-          _id: {
-            root: '$rootCategory',
-            subPath: '$subCategoryPath',
-          },
-          totalMoney: { $sum: '$calculatedMoney' },
-          details: {
-            $push: {
-              RE_ID: '$RE_ID',
-              RE_DATE: '$RE_DATE',
-              RE_KOMENT: '$RE_KOMENT',
-              RE_MONEY: '$calculatedMoney',
-            },
-          },
-        },
-      },
-
-      // 10. Фінальне групування по Root
-      {
-        $group: {
-          _id: '$_id.root',
+          _id: '$rootName',
           categories: {
             $push: {
-              path: '$_id.subPath',
-              totalMoney: '$totalMoney',
-              details: '$details',
+              path: '$subPath',
+              totalMoney: '$catTotal',
+              details: '$transDetails',
             },
           },
         },
       },
 
+      // 11. Сортування результатів за алфавітом
       { $sort: { _id: 1 } },
     ]);
 
