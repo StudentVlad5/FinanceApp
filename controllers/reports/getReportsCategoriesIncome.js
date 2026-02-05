@@ -7,7 +7,7 @@ const getReportsByCategoriesIncome = async (req, res) => {
       {
         $match: {
           RE_TRANS_RE: -1,
-          $expr: { $gt: [{ $toDouble: '$RE_MONEY' }, 0] },
+          // $expr: { $gt: [{ $toDouble: '$RE_MONEY' }, 0] },
         },
       },
 
@@ -60,10 +60,10 @@ const getReportsByCategoriesIncome = async (req, res) => {
       },
       { $unwind: '$catInfo' },
 
-      // 5. Фільтрація типів категорій (наприклад, тільки CAT_TYPE_PROFITABLE: false)
+      // 5. Фільтрація типів категорій (наприклад, тільки CAT_TYPE_PROFITABLE: true)
       {
         $match: {
-          'catInfo.CAT_TYPE_PROFITABLE': false,
+          'catInfo.CAT_TYPE_PROFITABLE': true,
         },
       },
 

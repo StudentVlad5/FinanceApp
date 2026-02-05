@@ -7,7 +7,7 @@ const getReportsCategoriesExpenses = async (req, res) => {
       {
         $match: {
           RE_TRANS_RE: -1,
-          $expr: { $lt: [{ $toDouble: '$RE_MONEY' }, 0] },
+          // $expr: { $lt: [{ $toDouble: '$RE_MONEY' }, 0] },
         },
       },
 
