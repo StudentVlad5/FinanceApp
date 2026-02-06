@@ -10,11 +10,19 @@ const getReestr = async (req, res) => {
       {
         $group: {
           _id: { schId: '$RE_SCH_ID' },
-          totalMoney: { $sum: { $toDouble: '$RE_MONEY' } },
+          totalMoney: {
+            $sum: {
+              $convert: {
+                input: '$RE_MONEY',
+                to: 'double',
+                onError: 0.0, // якщо помилка (наприклад, текст) — ставимо 0
+                onNull: 0.0, // якщо поле null — ставимо 0
+              },
+            },
+          },
         },
       },
     ]);
-
     // Використовуємо цикл for...of для обробки асинхронних операцій
     //   if (count === 1) {
     //     count += 1;
