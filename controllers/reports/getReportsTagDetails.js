@@ -18,6 +18,7 @@ const getReportsTagDetails = async (req, res) => {
       RE_TRANS_RE: -1,
     }; // ❗️ ВИДАЛЕНО: Вся логіка фільтрації по ID (catIDs, accIDs, conIDs) та commentSearch // ----- 2. ЕТАП: Ідентифікація Тегів (без змін) -----
     const tagIdentificationPipeline = [
+      // Розгортаємо теги, але зберігаємо документи без тегів
       { $unwind: { path: '$RE_TAG', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
@@ -28,7 +29,12 @@ const getReportsTagDetails = async (req, res) => {
         },
       },
       { $unwind: { path: '$tagInfo', preserveNullAndEmptyArrays: true } },
-      { $addFields: { validTagId: '$tagInfo.TG_ID' } },
+      // Додаємо логіку: якщо тегу немає в довіднику або поле порожнє — мітимо як 'no-tag'
+      {
+        $addFields: {
+          validTagId: { $ifNull: ['$tagInfo.TG_ID', 'no-tag'] },
+        },
+      },
       {
         $group: {
           _id: '$_id',
@@ -41,14 +47,18 @@ const getReportsTagDetails = async (req, res) => {
           newRoot: { $mergeObjects: ['$doc', { validTagIds: '$validTagIds' }] },
         },
       },
-    ]; // ----- 3. ЕТАП: Фільтрація по Тегу (без змін) -----
+    ];
+
+    // ----- 3. ЕТАП: Фільтрація по Тегу (без змін) -----
 
     const tagMatchStage = {};
-    if (tagId === 'null') {
-      tagMatchStage.validTagIds = [null];
+    // Перевіряємо обидва варіанти, які можуть прийти з фронтенда
+    if (tagId === 'null' || tagId === 'no-tag') {
+      tagMatchStage.validTagIds = 'no-tag';
     } else {
       tagMatchStage.validTagIds = Number(tagId);
-    } // ----- 4. ЕТАП: Збагачення (Lookups) (без змін) ----- // (Вони потрібні, щоб фронтенд міг фільтрувати по іменах)
+    }
+    // ----- 4. ЕТАП: Збагачення (Lookups) (без змін) ----- // (Вони потрібні, щоб фронтенд міг фільтрувати по іменах)
 
     const graphLookupStage = {
       $graphLookup: {

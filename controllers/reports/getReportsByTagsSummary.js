@@ -107,7 +107,8 @@ const getReportsByTagsSummary = async (req, res) => {
 
   pipeline.push({
     $group: {
-      _id: '$tagInfo.TG_ID',
+      // ❗️ ВИПРАВЛЕНО: Якщо TG_ID немає, використовуємо спеціальну мітку "no-tag"
+      _id: { $ifNull: ['$tagInfo.TG_ID', 'no-tag'] },
       tagName: { $first: '$tagInfo.TG_NAME' },
       totalIncome: {
         $sum: {
@@ -120,12 +121,20 @@ const getReportsByTagsSummary = async (req, res) => {
         },
       },
     },
-  }); // Етап 9: $project
+  });
 
+  // Етап 9: $project
   pipeline.push({
     $project: {
-      _id: '$_id',
-      tagName: { $ifNull: ['$tagName', 'Без тегу / Нерозпізнані'] },
+      _id: 1,
+      // ❗️ ВИПРАВЛЕНО: Якщо ми завантажили 'no-tag', даємо зрозумілу назву
+      tagName: {
+        $cond: {
+          if: { $eq: ['$_id', 'no-tag'] },
+          then: 'Без тегу',
+          else: { $ifNull: ['$tagName', 'Нерозпізнаний тег'] },
+        },
+      },
       totalIncome: 1,
       totalExpense: 1,
     },
