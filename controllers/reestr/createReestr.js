@@ -2,83 +2,69 @@ const { ValidationError } = require('../../helpers');
 const { Reestr } = require('../../models');
 
 const createReestr = async (req, res, next) => {
-  let { RE_ID } = req.body;
   const body = req.body;
+  let { RE_ID } = body;
 
-  // Приведення числових полів (важливо, якщо з фронта прийшли рядки)
-  const money = Number(body.RE_MONEY) || 0;
-  const sum = Number(body.RE_SUM) || money; // Якщо RE_SUM не прийшло, беремо з RE_MONEY
-  const kurs = Number(body.RE_KURS) || 1;
+  // 1. Отримуємо чисті значення для розрахунків
+  const moneyAtStart = Number(body.RE_MONEY) || 0;
+  const moneyAtEnd = Number(body.RE_MONEY_2); // Сума, яка має "приземлитися" на рахунок Б
+  const sumBase = Number(body.RE_SUM) || moneyAtStart;
   const schId = Number(body.RE_SCH_ID);
   const transSchId = body.RE_TRANS_SCH_ID ? Number(body.RE_TRANS_SCH_ID) : -1;
 
-  // Валідація тегів
-  let tags = body.RE_TAG;
-  if (Array.isArray(tags)) tags = tags.join(', ');
+  // Валідація тегів (якщо вони прийшли масивом)
+  let tags = Array.isArray(body.RE_TAG) ? body.RE_TAG.join(', ') : body.RE_TAG;
 
-  // Генерація унікального RE_ID
   if (!RE_ID) RE_ID = Date.now();
-  let isDuplicate = true;
-  while (isDuplicate) {
-    const existing = await Reestr.findOne({ RE_ID });
-    if (!existing) {
-      isDuplicate = false;
-    } else {
-      RE_ID += 1;
-    }
-  }
 
   try {
-    // 1. Звичайний запис
-    if (transSchId === -1) {
+    // ЛОГІКА: Звичайний запис (Дохід/Витрата)
+    if (transSchId === -1 || transSchId === '-1') {
+      const { RE_MONEY_2, ...cleanData } = body;
       const result = await Reestr.create({
-        ...body,
+        ...cleanData,
         RE_ID,
-        RE_SCH_ID: schId,
-        RE_MONEY: money,
-        RE_SUM: sum,
         RE_TAG: tags,
         RE_TRANS_SCH_ID: -1,
       });
       return res.status(200).json(result);
     }
 
-    // 2. ПЕРЕКАЗ
-    // Створюємо перший запис (мінус з поточного рахунку)
+    // ЛОГІКА: ПЕРЕКАЗ (дві проводки)
+    // 1-ша проводка: Списання з рахунку А
     const record1 = await Reestr.create({
-      ...body,
-      RE_ID,
+      RE_DATE: body.RE_DATE,
+      RE_KOMENT: body.RE_KOMENT,
       RE_SCH_ID: schId,
-      RE_MONEY: money,
-      RE_SUM: sum,
+      RE_MONEY: moneyAtStart,
+      RE_SUM: sumBase,
+      RE_KURS: body.RE_KURS || 1,
       RE_TAG: tags,
-      RE_TRANS_RE: RE_ID + 1,
       RE_TRANS_SCH_ID: transSchId,
+      RE_TRANS_RE: RE_ID + 1,
+      RE_ID: RE_ID,
+      RE_PAYE_ID: body.RE_PAYE_ID || 1,
     });
 
-    // Розрахунок для другого запису
-    let money2 = Number(body.RE_MONEY_2);
-    if (!money2) {
-      // Якщо валюти однакові, просто міняємо знак, якщо різні - через курс
-      money2 = Math.abs(money) === Math.abs(sum) ? sum / kurs : sum;
-    }
-
-    const record2 = await Reestr.create({
-      ...body,
-      RE_ID: record1.RE_TRANS_RE,
+    // 2-га проводка: Зарахування на рахунок Б
+    // Використовуємо RE_MONEY_2 лише для обчислення RE_MONEY другого запису
+    await Reestr.create({
+      RE_DATE: body.RE_DATE,
+      RE_KOMENT: body.RE_KOMENT,
       RE_SCH_ID: transSchId,
-      RE_MONEY: -money2, // Плюс на інший рахунок (якщо money був мінус)
-      RE_SUM: -sum,
+      RE_MONEY: moneyAtEnd, // Значення з "транспортного" поля фронта
+      RE_SUM: -sumBase,
+      RE_KURS: body.RE_KURS || 1,
       RE_TAG: tags,
-      RE_TRANS_RE: record1.RE_ID,
       RE_TRANS_SCH_ID: schId,
-      RE_TAS_ID: body.RE_PAYE_ID,
+      RE_TRANS_RE: RE_ID,
+      RE_ID: RE_ID + 1,
+      RE_PAYE_ID: body.RE_PAYE_ID || 1,
     });
 
     res.status(200).json(record1);
   } catch (err) {
-    console.error('Full Error info:', err); // Допоможе побачити точну помилку в терміналі
-    next(new ValidationError(err.message || 'Bad request'));
+    next(new ValidationError(err.message));
   }
 };
 

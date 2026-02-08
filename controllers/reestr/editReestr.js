@@ -2,90 +2,69 @@ const { ValidationError } = require('../../helpers');
 const { Reestr } = require('../../models');
 
 const editReestr = async (req, res, next) => {
-  const {
-    RE_ID,
-    RE_TRANS_SCH_ID,
-    RE_DATE,
-    RE_KOMENT,
-    RE_PAYE_ID,
-    RE_CAT_ID,
-    RE_CAT_ID0,
-    RE_CAT_ID1,
-    RE_MONEY,
-    RE_SUM,
-    RE_MONEY_2,
-    RE_TRANS_RE,
-    RE_KURS,
-    RE_TAG,
-    RE_SCH_ID,
-  } = req.body;
   const { id } = req.params;
+  const body = req.body;
 
   try {
-    // Оновлюємо основний запис
-    const newEditReestr = await Reestr.findOneAndUpdate(
+    // 1. Оновлюємо основний запис
+    // Витягуємо лише те, що точно є в моделі (щоб не було сміття)
+    const {
+      RE_ID,
+      RE_DATE,
+      RE_KOMENT,
+      RE_SCH_ID,
+      RE_MONEY,
+      RE_SUM,
+      RE_KURS,
+      RE_TAG,
+      RE_TRANS_SCH_ID,
+      RE_TRANS_RE,
+      RE_PAYE_ID,
+    } = body;
+
+    const updatedMain = await Reestr.findOneAndUpdate(
       { _id: id },
       {
         RE_ID,
-        RE_TRANS_SCH_ID,
         RE_DATE,
         RE_KOMENT,
-        RE_PAYE_ID,
-        RE_CAT_ID,
-        RE_CAT_ID0,
-        RE_CAT_ID1,
+        RE_SCH_ID,
         RE_MONEY,
         RE_SUM,
-        RE_TRANS_RE,
         RE_KURS,
         RE_TAG,
-        RE_SCH_ID,
+        RE_TRANS_SCH_ID,
+        RE_TRANS_RE,
+        RE_PAYE_ID,
       },
-      { new: true }, // Отримуємо вже оновлений об'єкт
+      { new: true },
     );
 
-    // Якщо це переказ, оновлюємо пов'язаний запис
-    if (RE_TRANS_SCH_ID !== -1 && RE_TRANS_SCH_ID !== '-1') {
-      let secondAccountMoney;
-
-      if (RE_MONEY_2 !== undefined && RE_MONEY_2 !== null) {
-        secondAccountMoney = Number(RE_MONEY_2);
-      } else {
-        const currentKurs = Number(RE_KURS) || 1;
-        const currentMoney = Number(RE_MONEY);
-        const currentSum = Number(RE_SUM);
-
-        // Якщо RE_MONEY == RE_SUM (з урахуванням знаку), значить перший рахунок - ГРН
-        if (Math.abs(currentMoney) === Math.abs(currentSum)) {
-          secondAccountMoney = currentSum / currentKurs;
-        } else {
-          secondAccountMoney = currentSum;
-        }
-      }
+    // 2. Якщо це переказ, оновлюємо парний запис через RE_TRANS_RE
+    if (RE_TRANS_SCH_ID && RE_TRANS_SCH_ID !== -1 && RE_TRANS_RE) {
+      // RE_MONEY_2 використовуємо лише для розрахунку, в базу він не йде
+      const targetMoney = Number(body.RE_MONEY_2) || -Number(RE_MONEY);
 
       await Reestr.findOneAndUpdate(
         { RE_ID: RE_TRANS_RE },
         {
-          RE_SCH_ID: RE_TRANS_SCH_ID,
           RE_DATE,
           RE_KOMENT,
-          RE_PAYE_ID,
-          RE_CAT_ID,
-          RE_CAT_ID0,
-          RE_CAT_ID1,
-          RE_MONEY: -secondAccountMoney,
+          RE_SCH_ID: RE_TRANS_SCH_ID,
+          RE_MONEY: targetMoney, // Записуємо в стандартне поле моделі
           RE_SUM: -Number(RE_SUM),
-          RE_TRANS_RE: RE_ID,
-          RE_TRANS_SCH_ID: RE_SCH_ID,
           RE_KURS,
           RE_TAG,
-          RE_TAS_ID: RE_PAYE_ID,
+          RE_TRANS_SCH_ID: RE_SCH_ID,
+          RE_TRANS_RE: RE_ID,
+          RE_PAYE_ID: RE_PAYE_ID,
         },
       );
     }
-    res.status(200).json(newEditReestr);
+
+    res.status(200).json(updatedMain);
   } catch (err) {
-    next(new ValidationError('Bad request (Невірний контекст або помилка БД)'));
+    next(new ValidationError('Error updating records'));
   }
 };
 module.exports = editReestr;
