@@ -52,7 +52,7 @@ const createReestr = async (req, res, next) => {
       RE_DATE: body.RE_DATE,
       RE_KOMENT: body.RE_KOMENT,
       RE_SCH_ID: transSchId,
-      RE_MONEY: moneyAtEnd, // Значення з "транспортного" поля фронта
+      RE_MONEY: -moneyAtEnd, // Значення з "транспортного" поля фронта
       RE_SUM: -sumBase,
       RE_KURS: body.RE_KURS || 1,
       RE_TAG: tags,

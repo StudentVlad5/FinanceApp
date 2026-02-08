@@ -43,7 +43,7 @@ const editReestr = async (req, res, next) => {
     // 2. Якщо це переказ, оновлюємо парний запис через RE_TRANS_RE
     if (RE_TRANS_SCH_ID && RE_TRANS_SCH_ID !== -1 && RE_TRANS_RE) {
       // RE_MONEY_2 використовуємо лише для розрахунку, в базу він не йде
-      const targetMoney = Number(body.RE_MONEY_2) || -Number(RE_MONEY);
+      const targetMoney = -Number(body.RE_MONEY_2) || -Number(RE_MONEY);
 
       await Reestr.findOneAndUpdate(
         { RE_ID: RE_TRANS_RE },
