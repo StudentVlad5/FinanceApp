@@ -11,6 +11,7 @@ const {
   routerContragents,
   routerTags,
   routerCategories,
+  routerBackup,
 } = require('./routes');
 
 const app = express();
@@ -37,6 +38,7 @@ app.use('/api/reports', routerReports);
 app.use('/api/contragent', routerContragents);
 app.use('/api/tags', routerTags);
 app.use('/api/category', routerCategories);
+app.use('/api/backup', routerBackup);
 
 app.use((req, res) => {
   console.log('!!!!! START APP (req, res) !!!!!!');

@@ -8,6 +8,7 @@ const reports = require('./reports');
 const tags = require('./tags');
 const categories = require('./categories');
 const auth = require('./auth');
+const backup = require('./backup');
 
 module.exports = {
   accounts,
@@ -20,4 +21,5 @@ module.exports = {
   categories,
   reports,
   auth,
+  backup,
 };

@@ -8,6 +8,7 @@ const routerContragents = require('./contragents');
 const routerTags = require('./tags');
 const routerCategories = require('./categories');
 const routerReports = require('./reports');
+const routerBackup = require('./backup');
 
 module.exports = {
   routerAccouns,
@@ -20,4 +21,5 @@ module.exports = {
   routerTags,
   routerCategories,
   routerReports,
+  routerBackup,
 };
