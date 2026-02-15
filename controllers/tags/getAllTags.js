@@ -3,7 +3,7 @@ const { Tags } = require('../../models');
 
 const getAllTags = async (req, res, next) => {
   try {
-    const tags = await Tags.find();
+    const tags = await Tags.find().sort({ TG_NAME: 1 });
     res.status(200).json(tags);
   } catch (err) {
     throw new ValidationError(err.message);
