@@ -3,194 +3,98 @@ const { Reestr } = require('../../models');
 const getReportsCategoriesExpenses = async (req, res) => {
   try {
     const aggregatedData = await Reestr.aggregate([
-      // 1. Фільтрація доходів (стандартно)
+      // 1. Фільтрація операцій
       {
         $match: {
           RE_TRANS_RE: -1,
-          // $expr: { $lt: [{ $toDouble: '$RE_MONEY' }, 0] },
         },
       },
 
-      // 2. Розрахунок грошей (без змін)
+      // 2. Розрахунок грошей (toDouble обов'язково, бо в реєстрі це String "-8465")
       {
         $addFields: {
           calculatedMoney: {
             $let: {
               vars: {
-                money: { $toDouble: '$RE_MONEY' },
-                kurs: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
+                m: { $toDouble: '$RE_MONEY' },
+                k: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
               },
               in: {
-                $cond: {
-                  if: {
-                    $and: [{ $ne: ['$$kurs', 1] }, { $ne: ['$$kurs', 0] }],
-                  },
-                  then: { $multiply: ['$$money', '$$kurs'] },
-                  else: '$$money',
-                },
+                $cond: [
+                  { $and: [{ $ne: ['$$k', 1] }, { $ne: ['$$k', 0] }] },
+                  { $multiply: ['$$m', '$$k'] },
+                  '$$m',
+                ],
               },
             },
           },
         },
       },
 
-      // 3. Знаходимо поточну категорію
+      // 3. Lookup Рахунків (Пряме порівняння чисел)
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'RE_SCH_ID', // Число в Reestr
+          foreignField: 'SCH_ID', // Число в Accounts
+          as: 'accountData',
+        },
+      },
+
+      // 4. Lookup Контрагентів (Також перевірте, якщо PAYEE_ID число - лишаємо так)
+      {
+        $lookup: {
+          from: 'contragents',
+          localField: 'RE_PAYE_ID',
+          foreignField: 'PAYEE_ID',
+          as: 'payeeData',
+        },
+      },
+
+      // 5. Lookup Категорій
       {
         $lookup: {
           from: 'categories',
           localField: 'RE_CAT_ID',
           foreignField: 'CAT_ID',
-          as: 'currentCategory',
+          as: 'cat',
         },
       },
-      { $unwind: '$currentCategory' },
-      // --- ДОДАНО ТУТ ---
-      // 3.1. Фільтруємо лише прибуткові категорії
-      {
-        $match: {
-          'currentCategory.CAT_TYPE_PROFITABLE': false,
-        },
-      },
-      // -----------------
-      // 4. Знаходимо всіх батьків (ancestors)
-      {
-        $graphLookup: {
-          from: 'categories',
-          startWith: '$currentCategory.CAT_PARENT_ID',
-          connectFromField: 'CAT_PARENT_ID',
-          connectToField: 'CAT_ID',
-          as: 'ancestors',
-        },
-      },
+      { $unwind: '$cat' },
+      { $match: { 'cat.CAT_TYPE_PROFITABLE': false } },
 
-      // 5. Об'єднуємо поточну категорію та батьків в один масив "unsortedCats"
-      {
-        $addFields: {
-          unsortedCats: {
-            $concatArrays: ['$ancestors', ['$currentCategory']],
-          },
-        },
-      },
-
-      // 6. БЕЗПЕЧНЕ СОРТУВАННЯ (Без $sort та $unwind)
-      // Ми вручну вибираємо рівні по черзі. Це не навантажує пам'ять.
-      // Припускаємо, що глибина вкладеності не більше 6 рівнів (для бухгалтерії цього зазвичай достатньо).
-      {
-        $addFields: {
-          sortedHierarchy: {
-            $concatArrays: [
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 0] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 1] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 2] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 3] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 4] },
-                },
-              },
-              {
-                $filter: {
-                  input: '$unsortedCats',
-                  as: 'c',
-                  cond: { $eq: ['$$c.CAT_LEVEL', 5] },
-                },
-              },
-            ],
-          },
-        },
-      },
-
-      // 7. Витягуємо імена з відсортованого масиву
-      {
-        $addFields: {
-          sortedPathNames: {
-            $map: {
-              input: '$sortedHierarchy',
-              as: 'item',
-              in: '$$item.CAT_NAME',
-            },
-          },
-        },
-      },
-      // 8. Розбиваємо на Root та SubPath
-      {
-        $addFields: {
-          rootCategory: { $arrayElemAt: ['$sortedPathNames', 0] },
-          subCategoryPath: {
-            $cond: {
-              // Якщо в ієрархії більше 1 елемента, беремо хвіст як підкатегорії
-              if: { $gt: [{ $size: '$sortedPathNames' }, 1] },
-              then: {
-                $slice: ['$sortedPathNames', 1, { $size: '$sortedPathNames' }],
-              },
-              // Якщо тільки 1 елемент — це операція в корінь, шлях порожній
-              else: [],
-            },
-          },
-        },
-      },
-
-      // 9. Групування: Root -> Path -> Details
+      // 6. ГРУПУВАННЯ
       {
         $group: {
-          _id: {
-            root: '$rootCategory',
-            subPath: '$subCategoryPath', // Порожній масив [] тепер теж є ключем групування
-          },
-          totalMoney: { $sum: '$calculatedMoney' },
-          details: {
+          _id: '$RE_CAT_ID',
+          categoryName: { $first: '$cat.CAT_NAME' },
+          parentID: { $first: '$cat.CAT_PARENT_ID' },
+          level: { $first: '$cat.CAT_LEVEL' },
+          totalSum: { $sum: '$calculatedMoney' },
+          operations: {
             $push: {
-              RE_ID: '$RE_ID',
               RE_DATE: '$RE_DATE',
               RE_KOMENT: '$RE_KOMENT',
               RE_MONEY: '$calculatedMoney',
+              ACC_NAME: {
+                $ifNull: [
+                  { $arrayElemAt: ['$accountData.SCH_NAME', 0] },
+                  'Невідомий рахунок',
+                ],
+              },
+              PAYEE_NAME: {
+                $ifNull: [
+                  { $arrayElemAt: ['$payeeData.PAYEE_NAME', 0] },
+                  '---',
+                ],
+              },
             },
           },
         },
       },
 
-      // 10. Фінальне групування по Root
-      {
-        $group: {
-          _id: '$_id.root',
-          categories: {
-            $push: {
-              path: '$_id.subPath',
-              totalMoney: '$totalMoney',
-              details: '$details',
-            },
-          },
-        },
-      },
-
-      { $sort: { _id: 1 } },
-    ]);
+      { $sort: { categoryName: 1 } },
+    ]).allowDiskUse(true);
 
     res.status(200).json(aggregatedData);
   } catch (err) {
@@ -198,5 +102,4 @@ const getReportsCategoriesExpenses = async (req, res) => {
     res.status(500).json({ message: 'Помилка при обробці даних' });
   }
 };
-
 module.exports = getReportsCategoriesExpenses;
