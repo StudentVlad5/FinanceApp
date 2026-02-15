@@ -1,100 +1,73 @@
-const { Reestr } = require('../../models');
+const { Categories } = require('../../models');
 
 const getReportsByCategoriesIncome = async (req, res) => {
   try {
-    const aggregatedData = await Reestr.aggregate([
-      // 1. Фільтрація операцій
-      {
-        $match: {
-          RE_TRANS_RE: -1,
-        },
-      },
+    const aggregatedData = await Categories.aggregate([
+      // 1. Беремо тільки витратні категорії
+      { $match: { CAT_TYPE_PROFITABLE: true } },
 
-      // 2. Розрахунок грошей (toDouble обов'язково, бо в реєстрі це String "-8465")
+      // 2. Приєднуємо операції з реєстру (Reestr)
       {
-        $addFields: {
-          calculatedMoney: {
-            $let: {
-              vars: {
-                m: { $toDouble: '$RE_MONEY' },
-                k: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
-              },
-              in: {
-                $cond: [
-                  { $and: [{ $ne: ['$$k', 1] }, { $ne: ['$$k', 0] }] },
-                  { $multiply: ['$$m', '$$k'] },
-                  '$$m',
-                ],
+        $lookup: {
+          from: 'reestrs', // назва колекції в БД
+          let: { catId: '$CAT_ID' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$RE_CAT_ID', '$$catId'] },
+                    { $eq: ['$RE_TRANS_RE', -1] }, // тільки витрати
+                    // Тут можна додати фільтр по датах, якщо потрібно на рівні БД:
+                    // { $gte: ['$RE_DATE', req.query.dateFrom] }
+                  ],
+                },
               },
             },
-          },
-        },
-      },
-
-      // 3. Lookup Рахунків (Пряме порівняння чисел)
-      {
-        $lookup: {
-          from: 'accounts',
-          localField: 'RE_SCH_ID', // Число в Reestr
-          foreignField: 'SCH_ID', // Число в Accounts
-          as: 'accountData',
-        },
-      },
-
-      // 4. Lookup Контрагентів (Також перевірте, якщо PAYEE_ID число - лишаємо так)
-      {
-        $lookup: {
-          from: 'contragents',
-          localField: 'RE_PAYE_ID',
-          foreignField: 'PAYEE_ID',
-          as: 'payeeData',
-        },
-      },
-
-      // 5. Lookup Категорій
-      {
-        $lookup: {
-          from: 'categories',
-          localField: 'RE_CAT_ID',
-          foreignField: 'CAT_ID',
-          as: 'cat',
-        },
-      },
-      { $unwind: '$cat' },
-      { $match: { 'cat.CAT_TYPE_PROFITABLE': true } },
-
-      // 6. ГРУПУВАННЯ
-      {
-        $group: {
-          _id: '$RE_CAT_ID',
-          categoryName: { $first: '$cat.CAT_NAME' },
-          parentID: { $first: '$cat.CAT_PARENT_ID' },
-          level: { $first: '$cat.CAT_LEVEL' },
-          totalSum: { $sum: '$calculatedMoney' },
-          operations: {
-            $push: {
-              RE_DATE: '$RE_DATE',
-              RE_KOMENT: '$RE_KOMENT',
-              RE_MONEY: '$calculatedMoney',
-              ACC_NAME: {
-                $ifNull: [
-                  { $arrayElemAt: ['$accountData.SCH_NAME', 0] },
-                  'Невідомий рахунок',
-                ],
-              },
-              PAYEE_NAME: {
-                $ifNull: [
-                  { $arrayElemAt: ['$payeeData.PAYEE_NAME', 0] },
-                  '---',
-                ],
+            // Розрахунок грошей для кожної операції
+            {
+              $addFields: {
+                calculatedMoney: {
+                  $let: {
+                    vars: {
+                      m: { $toDouble: '$RE_MONEY' },
+                      k: { $ifNull: [{ $toDouble: '$RE_KURS' }, 1] },
+                    },
+                    in: {
+                      $cond: [
+                        { $and: [{ $ne: ['$$k', 1] }, { $ne: ['$$k', 0] }] },
+                        { $multiply: ['$$m', '$$k'] },
+                        '$$m',
+                      ],
+                    },
+                  },
+                },
               },
             },
-          },
+          ],
+          as: 'operations',
         },
       },
 
-      { $sort: { categoryName: 1 } },
-    ]).allowDiskUse(true);
+      // 3. Додаємо допоміжні Lookups для назв (рахунки, контрагенти)
+      // Оскільки операцій багато, ми робимо це всередині pipeline вище або окремо
+      // Для швидкості краще приєднувати назви лише до тих категорій, де є операції
+
+      // 4. Формуємо фінальні поля
+      {
+        $project: {
+          _id: '$CAT_ID',
+          categoryName: '$CAT_NAME',
+          parentID: '$CAT_PARENT_ID',
+          level: '$CAT_LEVEL',
+          operations: 1,
+          totalSum: { $sum: '$operations.calculatedMoney' },
+        },
+      },
+
+      // 5. Сортуємо для зручності фронту
+      { $sort: { level: 1, categoryName: 1 } },
+    ]);
 
     res.status(200).json(aggregatedData);
   } catch (err) {
