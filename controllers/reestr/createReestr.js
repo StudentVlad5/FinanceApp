@@ -26,6 +26,7 @@ const createReestr = async (req, res, next) => {
         RE_ID,
         RE_TAG: tags,
         RE_TRANS_SCH_ID: -1,
+        RE_TRANS_RE: -1,
       });
       return res.status(200).json(result);
     }
