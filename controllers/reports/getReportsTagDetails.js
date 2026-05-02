@@ -1,24 +1,16 @@
 const { Reestr } = require('../../models');
 
-// (Залишаємо 'toArray' на випадок, якщо він потрібен іншим функціям)
-const toArray = (value) => {
-  if (!value) return [];
-  return Array.isArray(value) ? value : [value];
-};
-
 const getReportsTagDetails = async (req, res) => {
   try {
-    const {
-      tagId, // TG_ID (число, напр. 163) або рядок 'null'
-      dateFrom,
-      dateTo, // ❗️ ВИДАЛЕНО: commentSearch, selectedCategories, selectedAccounts, selectedContragents
-    } = req.query; // ----- 1. ЕТАП: Первинний $match (ШВИДКИЙ) ----- // Залишаємо лише базовий фільтр
+    const { tagId, dateFrom, dateTo } = req.query;
 
+    // ----- 1. ЕТАП: Первинний $match -----
     const primaryMatchStage = {
       RE_TRANS_RE: -1,
-    }; // ❗️ ВИДАЛЕНО: Вся логіка фільтрації по ID (catIDs, accIDs, conIDs) та commentSearch // ----- 2. ЕТАП: Ідентифікація Тегів (без змін) -----
+    };
+
+    // ----- 2. ЕТАП: Ідентифікація Тегів -----
     const tagIdentificationPipeline = [
-      // Розгортаємо теги, але зберігаємо документи без тегів
       { $unwind: { path: '$RE_TAG', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
@@ -29,7 +21,6 @@ const getReportsTagDetails = async (req, res) => {
         },
       },
       { $unwind: { path: '$tagInfo', preserveNullAndEmptyArrays: true } },
-      // Додаємо логіку: якщо тегу немає в довіднику або поле порожнє — мітимо як 'no-tag'
       {
         $addFields: {
           validTagId: { $ifNull: ['$tagInfo.TG_ID', 'no-tag'] },
@@ -49,17 +40,15 @@ const getReportsTagDetails = async (req, res) => {
       },
     ];
 
-    // ----- 3. ЕТАП: Фільтрація по Тегу (без змін) -----
-
+    // ----- 3. ЕТАП: Фільтрація по Тегу -----
     const tagMatchStage = {};
-    // Перевіряємо обидва варіанти, які можуть прийти з фронтенда
     if (tagId === 'null' || tagId === 'no-tag') {
       tagMatchStage.validTagIds = 'no-tag';
     } else {
       tagMatchStage.validTagIds = Number(tagId);
     }
-    // ----- 4. ЕТАП: Збагачення (Lookups) (без змін) ----- // (Вони потрібні, щоб фронтенд міг фільтрувати по іменах)
 
+    // ----- 4. ЕТАП: Збагачення (Lookups) -----
     const graphLookupStage = {
       $graphLookup: {
         from: 'categories',
@@ -84,37 +73,18 @@ const getReportsTagDetails = async (req, res) => {
         foreignField: 'PAYEE_ID',
         as: 'contragentInfo',
       },
-    }; // ----- 5. ЕТАП: Розрахункові Поля (AddFields) (без змін) ----- // (Потрібні 'calculatedMoney', 'categoryName', 'accountName', 'contragentName')
+    };
 
+    // ----- 5. ЕТАП: Розрахункові Поля (Використовуємо RE_SUM_UAH) -----
     const addFieldsStage = {
       $addFields: {
+        // Замість складного $multiply використовуємо готове поле RE_SUM_UAH
         calculatedMoney: {
-          $let: {
-            vars: {
-              money: {
-                $convert: {
-                  input: '$RE_MONEY',
-                  to: 'double',
-                  onError: 0.0,
-                  onNull: 0.0,
-                },
-              },
-              kurs: {
-                $convert: {
-                  input: '$RE_KURS',
-                  to: 'double',
-                  onError: 1.0,
-                  onNull: 1.0,
-                },
-              },
-            },
-            in: {
-              $cond: {
-                if: { $and: [{ $ne: ['$$kurs', 1] }, { $ne: ['$$kurs', 0] }] },
-                then: { $multiply: ['$$money', '$$kurs'] },
-                else: '$$money',
-              },
-            },
+          $convert: {
+            input: '$RE_SUM_UAH',
+            to: 'double',
+            onError: 0.0,
+            onNull: 0.0,
           },
         },
         categoryName: {
@@ -137,12 +107,12 @@ const getReportsTagDetails = async (req, res) => {
           $ifNull: [{ $arrayElemAt: ['$contragentInfo.PAYEE_NAME', 0] }, 'N/A'],
         },
       },
-    }; // ----- ЗБИРАЄМО ПАЙПЛАЙН -----
+    };
 
-    const aggregationPipeline = [
-      { $match: primaryMatchStage }, // 1.
-    ]; // ----- ЕТАП ФІЛЬТРАЦІЇ ПО ДАТАХ (залишається на бекенді) -----
+    // ----- ЗБИРАЄМО ПАЙПЛАЙН -----
+    const aggregationPipeline = [{ $match: primaryMatchStage }];
 
+    // Фільтрація по датах
     aggregationPipeline.push({
       $addFields: {
         convertedDate: {
@@ -168,15 +138,16 @@ const getReportsTagDetails = async (req, res) => {
       aggregationPipeline.push({
         $match: { convertedDate: dateMatchFilter },
       });
-    } // ----- КІНЕЦЬ ЕТАПУ ФІЛЬТРАЦІЇ ПО ДАТАХ ----- // Додаємо решту пайплайну
+    }
+
     aggregationPipeline.push(
-      ...tagIdentificationPipeline, // 2.
-      { $match: tagMatchStage }, // 3.
-      graphLookupStage, // 4.
+      ...tagIdentificationPipeline,
+      { $match: tagMatchStage },
+      graphLookupStage,
       lookupAccountStage,
       lookupContragentStage,
-      addFieldsStage, // 5. // { $sort } -- видалено
-    ); // ----- ВИКОНАННЯ -----
+      addFieldsStage,
+    );
 
     const details = await Reestr.aggregate(aggregationPipeline);
 

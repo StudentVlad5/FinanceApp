@@ -32,6 +32,10 @@ const reestrSchema = new Schema({
     type: String,
     default: '',
   },
+  RE_SUM_UAH: {
+    type: String,
+    default: '',
+  },
   RE_INCR: {
     type: Number,
     default: 0,

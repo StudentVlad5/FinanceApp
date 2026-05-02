@@ -8,6 +8,7 @@ const Tags = require('./tags');
 const Categories = require('./categories');
 const CategNames = require('./categnames');
 const Counter = require('./counter');
+const ExchangeRate = require('./exchangeRate');
 const {
   Users,
   userValidationSchema,
@@ -28,6 +29,7 @@ module.exports = {
   CategNames,
   Users,
   Counter,
+  ExchangeRate,
   userValidationSchema,
   userUpdateValidationSchema,
   userEditValidationSchema,

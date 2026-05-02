@@ -4,8 +4,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const logger = require('morgan');
 const cors = require('cors');
+const cron = require('node-cron');
 const path = require('path');
 const app = require('./app');
+const { syncRates } = require('./helpers/syncRates');
+const { repairMissingRates } = require('./helpers/repairMissingRates');
+const ExchangeRate = require('./models/exchangeRate');
 
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short';
 
@@ -26,6 +30,8 @@ if (prod) {
   });
 }
 
+let k = 1;
+
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(mongoUri, {
@@ -41,12 +47,24 @@ const connectDB = async () => {
 
 connectDB()
   .then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
       console.log('✅ Database connection successful');
       console.log(`🚀 Server running at http://localhost:${PORT}`);
+      if (typeof k !== 'undefined' && k === 1) {
+        await repairMissingRates();
+
+        k++;
+      }
+      await syncRates(14);
     });
   })
+
   .catch((error) => {
     console.log(error.message);
     process.exit(1);
   });
+
+cron.schedule('0 18 * * *', async () => {
+  console.log('Запуск планової синхронізації курсів...');
+  await syncRates(2);
+});
