@@ -64,7 +64,20 @@ connectDB()
     process.exit(1);
   });
 
-cron.schedule('0 18 * * *', async () => {
-  console.log('Запуск планової синхронізації курсів...');
-  await syncRates(2);
-});
+cron.schedule(
+  '0 * * * *',
+  async () => {
+    try {
+      console.log('Запуск планової синхронізації курсів...');
+
+      await syncRates(2);
+
+      console.log('Синхронізація завершена');
+    } catch (err) {
+      console.error('Помилка синхронізації:', err);
+    }
+  },
+  {
+    timezone: 'Europe/Kyiv',
+  },
+);
