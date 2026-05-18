@@ -70,7 +70,7 @@ cron.schedule(
     try {
       console.log('Запуск планової синхронізації курсів...');
 
-      await syncRates(2);
+      await syncRates(7);
 
       console.log('Синхронізація завершена');
     } catch (err) {
