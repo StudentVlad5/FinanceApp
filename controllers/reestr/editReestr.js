@@ -1,82 +1,22 @@
 const { ValidationError } = require('../../helpers');
 const { Reestr, Account, ExchangeRate } = require('../../models');
 
-// const editReestr = async (req, res, next) => {
-//   const { id } = req.params;
-//   const body = req.body;
-
-//   try {
-//     const {
-//       RE_ID,
-//       RE_DATE,
-//       RE_KOMENT,
-//       RE_SCH_ID,
-//       RE_MONEY,
-//       RE_SUM,
-//       RE_KURS,
-//       RE_TAG,
-//       RE_TRANS_SCH_ID,
-//       RE_TRANS_RE,
-//       RE_PAYE_ID,
-//     } = body;
-
-//     const updatedMain = await Reestr.findOneAndUpdate(
-//       { _id: id },
-//       {
-//         RE_ID,
-//         RE_DATE,
-//         RE_KOMENT,
-//         RE_SCH_ID,
-//         RE_MONEY,
-//         RE_SUM,
-//         RE_KURS,
-//         RE_TAG,
-//         RE_TRANS_SCH_ID,
-//         RE_TRANS_RE,
-//         RE_PAYE_ID,
-//       },
-//       { new: true },
-//     );
-
-//     if (RE_TRANS_SCH_ID && RE_TRANS_SCH_ID !== -1 && RE_TRANS_RE) {
-//       const targetMoney = -Number(body.RE_MONEY_2) || -Number(RE_MONEY);
-
-//       await Reestr.findOneAndUpdate(
-//         { RE_ID: RE_TRANS_RE },
-//         {
-//           RE_DATE,
-//           RE_KOMENT,
-//           RE_SCH_ID: RE_TRANS_SCH_ID,
-//           RE_MONEY: targetMoney,
-//           RE_SUM: -Number(RE_SUM),
-//           RE_KURS,
-//           RE_TAG,
-//           RE_TRANS_SCH_ID: RE_SCH_ID,
-//           RE_TRANS_RE: RE_ID,
-//           RE_PAYE_ID: RE_PAYE_ID,
-//         },
-//       );
-//     }
-
-//     res.status(200).json(updatedMain);
-//   } catch (err) {
-//     next(new ValidationError('Error updating records'));
-//   }
-// };
-
 const editReestr = async (req, res, next) => {
   const { id } = req.params;
   const body = req.body;
 
   try {
-    const getUahSum = async (sId, sum, date) => {
+    const getUahSum = async (sId, sum) => {
       const account = await Account.findOne({ SCH_ID: sId });
       if (!account || account.SCH_CUR === '980') return sum;
+
       const rateEntry = await ExchangeRate.findOne({
-        date,
         currency_code: account.SCH_CUR,
-      });
-      return sum * (rateEntry ? rateEntry.rate : 1);
+        date: { $lte: body.RE_DATE },
+      }).sort({ date: -1 });
+      const finalRate = rateEntry ? rateEntry.rate : 1;
+
+      return sum * finalRate;
     };
 
     const currentSum =
