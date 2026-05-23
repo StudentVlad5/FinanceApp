@@ -11,5 +11,11 @@
       "src": "/api/(.*)",
       "dest": "/index.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/sync-rates",
+      "schedule": "0 * * * *"
+    }
   ]
 }
