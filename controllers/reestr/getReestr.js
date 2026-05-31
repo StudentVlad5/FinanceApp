@@ -2,11 +2,18 @@ const { Reestr } = require('../../models');
 // const list = require('../../CATEGORY');
 
 // let count = 1;
-
+const today = new Date().toISOString().split('T')[0];
 const getReestr = async (req, res) => {
   try {
     // const aggregatedData = await Reestr.find();
     const aggregatedData = await Reestr.aggregate([
+      {
+        $match: {
+          RE_DATE: {
+            $lte: today,
+          },
+        },
+      },
       {
         $group: {
           _id: { schId: '$RE_SCH_ID' },
