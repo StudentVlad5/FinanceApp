@@ -7,17 +7,13 @@ const editReestr = async (req, res, next) => {
 
   try {
     const getUahSum = async (sId, sum, rawDate) => {
-      // Примусово перетворюємо ID на число, бо в базі це Int32
       const numericId = Number(sId);
-
-      // Шукаємо рахунок за числовим ID
       const account = await Account.findOne({ SCH_ID: numericId });
 
       console.log(
         `[DEBUG] Шукаємо SCH_ID (Number): ${numericId}. Знайдено: ${!!account}, Валюта: ${account ? account.SCH_CUR : 'немає'}`,
       );
 
-      // Якщо рахунок не знайдено або це гривня (код 980 або UAH) — повертаємо суму без змін
       if (
         !account ||
         String(account.SCH_CUR) === '980' ||
@@ -26,7 +22,6 @@ const editReestr = async (req, res, next) => {
         return sum;
       }
 
-      // Очищаємо дату від ISO-хвостів, залишаємо тільки "YYYY-MM-DD"
       let currentStringDate = rawDate
         ? String(rawDate).split('T')[0]
         : new Date().toISOString().split('T')[0];
@@ -34,7 +29,6 @@ const editReestr = async (req, res, next) => {
       let rateEntry = null;
       let attempts = 0;
 
-      // Цикл пошуку курсу (крокує назад до 10 днів)
       while (!rateEntry && attempts < 10) {
         rateEntry = await ExchangeRate.findOne({
           $or: [
@@ -53,32 +47,35 @@ const editReestr = async (req, res, next) => {
       }
 
       console.log(
-        `[DEBUG] Курс для валюти ${account.SCH_CUR}: ${rateEntry ? rateEntry.rate : 'НЕ ЗНАЙДЕНО (взято 1)'} на дату: ${currentStringDate}`,
+        `[DEBUG] Курс для валюти ${account.SCH_CUR}: ${rateEntry ? rateEntry.rate : 'НЕ ЗНАЙДЕНО'} на дату: ${currentStringDate}`,
       );
 
       const finalRate = rateEntry ? Number(rateEntry.rate) : 1;
       return sum * finalRate;
     };
 
-    // Конвертуємо суми з фронтенду в числа
+    // Нормалізуємо початкову суму
     const currentSum =
       Number(body.RE_SUM) !== 0 ? Number(body.RE_SUM) : Number(body.RE_MONEY);
 
-    // Рахуємо гривневу суму
+    // Отримуємо числове значення перерахунку (наприклад: 1381506.3)
     const uahSumMain = await getUahSum(
       body.RE_SCH_ID,
       currentSum,
       body.RE_DATE,
     );
 
+    // Формуємо фінальний рядок RE_SUM_UAH
+    const stringUahSumMain = uahSumMain.toFixed(2);
+
     // Оновлюємо основний запис
     const updatedMain = await Reestr.findOneAndUpdate(
       { _id: id },
       {
-        ...body,
+        ...body, // розгортаємо старі дані з фронтенду
         RE_SUM: currentSum,
         RE_MONEY: Number(body.RE_MONEY),
-        RE_SUM_UAH: uahSumMain.toFixed(2).toString(), // ТУТ ТЕПЕР БУДЕ ПРАВИЛЬНА СУМА З КУРСОМ!
+        RE_SUM_UAH: stringUahSumMain, // ПЕРЕЗАПИСУЄМО РЯДОК З ПРАВИЛЬНИМ КУРСОМ
       },
       { new: true },
     );
@@ -101,7 +98,7 @@ const editReestr = async (req, res, next) => {
           RE_SCH_ID: Number(body.RE_TRANS_SCH_ID),
           RE_MONEY: targetMoney,
           RE_SUM: -currentSum,
-          RE_SUM_UAH: uahSumPair.toFixed(2).toString(),
+          RE_SUM_UAH: uahSumPair.toFixed(2), // ЗАПИСУЄМО ЯК РЯДОК
           RE_KURS: Number(body.RE_KURS),
           RE_TAG: Array.isArray(body.RE_TAG)
             ? body.RE_TAG.join(', ')
