@@ -7,18 +7,17 @@ const editReestr = async (req, res, next) => {
 
   try {
     const getUahSum = async (sId, sum, rawDate) => {
-      // ПРИМУСОВО приводимо до String, бо у схемі SCH_ID: String
-      const stringId = String(sId).trim();
+      // Примусово перетворюємо ID на число, бо в базі це Int32
+      const numericId = Number(sId);
 
-      // Шукаємо рахунок за строковим ID
-      const account = await Account.findOne({ SCH_ID: stringId });
+      // Шукаємо рахунок за числовим ID
+      const account = await Account.findOne({ SCH_ID: numericId });
 
-      // Виводимо чіткий дебаг в консоль
       console.log(
-        `[DEBUG] Шукаємо SCH_ID (String): "${stringId}". Знайдено: ${!!account}, Валюта: ${account ? account.SCH_CUR : 'немає'}`,
+        `[DEBUG] Шукаємо SCH_ID (Number): ${numericId}. Знайдено: ${!!account}, Валюта: ${account ? account.SCH_CUR : 'немає'}`,
       );
 
-      // Якщо рахунок не знайдено або це гривня (код 980 або UAH) — повертаємо базову суму
+      // Якщо рахунок не знайдено або це гривня (код 980 або UAH) — повертаємо суму без змін
       if (
         !account ||
         String(account.SCH_CUR) === '980' ||
@@ -27,7 +26,7 @@ const editReestr = async (req, res, next) => {
         return sum;
       }
 
-      // Очищаємо дату від ISO-хвостів, залишаємо суто рядок "YYYY-MM-DD"
+      // Очищаємо дату від ISO-хвостів, залишаємо тільки "YYYY-MM-DD"
       let currentStringDate = rawDate
         ? String(rawDate).split('T')[0]
         : new Date().toISOString().split('T')[0];
@@ -35,7 +34,7 @@ const editReestr = async (req, res, next) => {
       let rateEntry = null;
       let attempts = 0;
 
-      // Цикл кроку назад по днях, якщо на поточну дату курсу немає
+      // Цикл пошуку курсу (крокує назад до 10 днів)
       while (!rateEntry && attempts < 10) {
         rateEntry = await ExchangeRate.findOne({
           $or: [
@@ -61,11 +60,11 @@ const editReestr = async (req, res, next) => {
       return sum * finalRate;
     };
 
-    // Нормалізуємо суми (перетворюємо рядок "27000" на число 27000)
+    // Конвертуємо суми з фронтенду в числа
     const currentSum =
       Number(body.RE_SUM) !== 0 ? Number(body.RE_SUM) : Number(body.RE_MONEY);
 
-    // Рахуємо гривневу суму для основного запису
+    // Рахуємо гривневу суму
     const uahSumMain = await getUahSum(
       body.RE_SCH_ID,
       currentSum,
@@ -77,21 +76,16 @@ const editReestr = async (req, res, next) => {
       { _id: id },
       {
         ...body,
-        RE_SUM: currentSum, // зберігаємо як число
-        RE_MONEY: Number(body.RE_MONEY), // зберігаємо як число
-        RE_SUM_UAH: uahSumMain.toFixed(2).toString(), // записуємо оновлений UAH ліміт
+        RE_SUM: currentSum,
+        RE_MONEY: Number(body.RE_MONEY),
+        RE_SUM_UAH: uahSumMain.toFixed(2).toString(), // ТУТ ТЕПЕР БУДЕ ПРАВИЛЬНА СУМА З КУРСОМ!
       },
       { new: true },
     );
 
     // Оновлення парного запису (якщо це переказ)
     const transSchId = Number(body.RE_TRANS_SCH_ID);
-    if (
-      body.RE_TRANS_SCH_ID &&
-      transSchId !== -1 &&
-      body.RE_TRANS_SCH_ID !== '-1' &&
-      body.RE_TRANS_RE
-    ) {
+    if (body.RE_TRANS_SCH_ID && transSchId !== -1 && body.RE_TRANS_RE) {
       const targetMoney = -Number(body.RE_MONEY_2) || -Number(body.RE_MONEY);
       const uahSumPair = await getUahSum(
         body.RE_TRANS_SCH_ID,
@@ -104,7 +98,7 @@ const editReestr = async (req, res, next) => {
         {
           RE_DATE: body.RE_DATE,
           RE_KOMENT: body.RE_KOMENT,
-          RE_SCH_ID: String(body.RE_TRANS_SCH_ID),
+          RE_SCH_ID: Number(body.RE_TRANS_SCH_ID),
           RE_MONEY: targetMoney,
           RE_SUM: -currentSum,
           RE_SUM_UAH: uahSumPair.toFixed(2).toString(),
@@ -112,7 +106,7 @@ const editReestr = async (req, res, next) => {
           RE_TAG: Array.isArray(body.RE_TAG)
             ? body.RE_TAG.join(', ')
             : body.RE_TAG,
-          RE_TRANS_SCH_ID: String(body.RE_SCH_ID),
+          RE_TRANS_SCH_ID: Number(body.RE_SCH_ID),
           RE_TRANS_RE: body.RE_ID,
           RE_PAYE_ID: body.RE_PAYE_ID,
         },
