@@ -29,7 +29,7 @@ const editReestr = async (req, res, next) => {
       let rateEntry = null;
       let attempts = 0;
 
-      while (!rateEntry && attempts < 10) {
+      while (!rateEntry && attempts < 20) {
         rateEntry = await ExchangeRate.findOne({
           $or: [
             { currency_code: String(account.SCH_CUR).trim() },

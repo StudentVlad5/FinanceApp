@@ -98,6 +98,11 @@ const getReportsCategoriesExpenses = async (req, res) => {
                 },
               },
             },
+            {
+              $sort: {
+                RE_DATE: -1, // або 1
+              },
+            },
             // ТУТ СПРОЩЕННЯ: Замість $let та $multiply просто конвертуємо RE_SUM_UAH
             {
               $addFields: {
