@@ -98,6 +98,11 @@ const getReportsByCategoriesIncome = async (req, res) => {
                 },
               },
             },
+            {
+              $sort: {
+                RE_DATE: -1, // або 1
+              },
+            },
             // Використовуємо готове поле RE_SUM_UAH
             {
               $addFields: {
