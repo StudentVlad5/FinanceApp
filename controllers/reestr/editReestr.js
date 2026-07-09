@@ -55,7 +55,7 @@ const editReestr = async (req, res, next) => {
 
     // Нормалізуємо початкову суму
     const currentSum =
-      Number(body.RE_SUM) !== 0 ? Number(body.RE_SUM) : Number(body.RE_MONEY);
+      Number(body.RE_SUM) !== 0 ? Number(body.RE_MONEY) : Number(body.RE_SUM);
 
     // Отримуємо числове значення перерахунку (наприклад: 1381506.3)
     const calcMain = await getUahSum(body.RE_SCH_ID, currentSum, body.RE_DATE);
