@@ -8,7 +8,11 @@ const editReestr = async (req, res, next) => {
   try {
     const getUahSum = async (sId, sum, rawDate) => {
       const numericId = Number(sId);
-      const account = await Account.findOne({ SCH_ID: numericId });
+      const account = await Account.findOne({
+        $expr: {
+          $eq: [{ $toString: '$SCH_ID' }, String(sId)],
+        },
+      });
 
       console.log(
         `[DEBUG] Шукаємо SCH_ID (Number): ${numericId}. Знайдено: ${!!account}, Валюта: ${account ? account.SCH_CUR : 'немає'}`,
@@ -19,39 +23,34 @@ const editReestr = async (req, res, next) => {
         String(account.SCH_CUR) === '980' ||
         String(account.SCH_CUR).toUpperCase() === 'UAH'
       ) {
-        return sum;
+        return {
+          rate: 1,
+          sumUah: Number(sum),
+        };
       }
 
       let currentStringDate = rawDate
         ? String(rawDate).split('T')[0]
         : new Date().toISOString().split('T')[0];
 
-      let rateEntry = null;
-      let attempts = 0;
+      const rateEntry = await ExchangeRate.findOne({
+        $or: [
+          { currency_code: String(account.SCH_CUR) },
+          { valcode: String(account.SCH_CUR).toUpperCase() },
+        ],
+        date: { $lte: currentStringDate },
+      }).sort({ date: -1 });
 
-      while (!rateEntry && attempts < 20) {
-        rateEntry = await ExchangeRate.findOne({
-          $or: [
-            { currency_code: String(account.SCH_CUR).trim() },
-            { valcode: String(account.SCH_CUR).toUpperCase().trim() },
-          ],
-          date: { $lte: currentStringDate },
-        }).sort({ date: -1 });
-
-        if (!rateEntry) {
-          const dateObj = new Date(currentStringDate);
-          dateObj.setDate(dateObj.getDate() - 1);
-          currentStringDate = dateObj.toISOString().split('T')[0];
-          attempts++;
-        }
-      }
+      const finalRate = rateEntry ? Number(rateEntry.rate) : 1;
 
       console.log(
         `[DEBUG] Курс для валюти ${account.SCH_CUR}: ${rateEntry ? rateEntry.rate : 'НЕ ЗНАЙДЕНО'} на дату: ${currentStringDate}`,
       );
 
-      const finalRate = rateEntry ? Number(rateEntry.rate) : 1;
-      return sum * finalRate;
+      return {
+        rate: finalRate,
+        sumUah: sum * finalRate,
+      };
     };
 
     // Нормалізуємо початкову суму
@@ -59,23 +58,16 @@ const editReestr = async (req, res, next) => {
       Number(body.RE_SUM) !== 0 ? Number(body.RE_SUM) : Number(body.RE_MONEY);
 
     // Отримуємо числове значення перерахунку (наприклад: 1381506.3)
-    const uahSumMain = await getUahSum(
-      body.RE_SCH_ID,
-      currentSum,
-      body.RE_DATE,
-    );
+    const calcMain = await getUahSum(body.RE_SCH_ID, currentSum, body.RE_DATE);
 
-    // Формуємо фінальний рядок RE_SUM_UAH
-    const stringUahSumMain = uahSumMain.toFixed(2);
-
-    // Оновлюємо основний запис
     const updatedMain = await Reestr.findOneAndUpdate(
       { _id: id },
       {
-        ...body, // розгортаємо старі дані з фронтенду
+        ...body,
         RE_SUM: currentSum,
         RE_MONEY: Number(body.RE_MONEY),
-        RE_SUM_UAH: stringUahSumMain, // ПЕРЕЗАПИСУЄМО РЯДОК З ПРАВИЛЬНИМ КУРСОМ
+        RE_KURS: calcMain.rate,
+        RE_SUM_UAH: calcMain.sumUah.toFixed(2),
       },
       { new: true },
     );
@@ -84,7 +76,7 @@ const editReestr = async (req, res, next) => {
     const transSchId = Number(body.RE_TRANS_SCH_ID);
     if (body.RE_TRANS_SCH_ID && transSchId !== -1 && body.RE_TRANS_RE) {
       const targetMoney = -Number(body.RE_MONEY_2) || -Number(body.RE_MONEY);
-      const uahSumPair = await getUahSum(
+      const calcPair = await getUahSum(
         body.RE_TRANS_SCH_ID,
         -currentSum,
         body.RE_DATE,
@@ -98,8 +90,8 @@ const editReestr = async (req, res, next) => {
           RE_SCH_ID: Number(body.RE_TRANS_SCH_ID),
           RE_MONEY: targetMoney,
           RE_SUM: -currentSum,
-          RE_SUM_UAH: uahSumPair.toFixed(2), // ЗАПИСУЄМО ЯК РЯДОК
-          RE_KURS: Number(body.RE_KURS),
+          RE_SUM_UAH: calcPair.sumUah.toFixed(2),
+          RE_KURS: calcPair.rate,
           RE_TAG: Array.isArray(body.RE_TAG)
             ? body.RE_TAG.join(', ')
             : body.RE_TAG,
