@@ -66,13 +66,6 @@ const createReestr = async (req, res, next) => {
         rate,
         sumUah: Number(sum) * rate,
       };
-
-      const rate = rateEntry ? Number(rateEntry.rate) : 1;
-
-      return {
-        rate,
-        sumUah: sum * rate,
-      };
     };
 
     // 1. ЛОГІКА: Звичайний запис
