@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose');
 
 const accountSchema = new Schema({
   SCH_ID: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     required: true,
   },
   SCH_NAME: {
@@ -11,19 +11,19 @@ const accountSchema = new Schema({
     trim: true,
   },
   SCH_GROUP: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 0,
   },
   SCH_CUR: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 980, // UAH за ISO
   },
   SCH_TYPE: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 0,
   },
   SCH_VIEW: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 1,
   },
   SCH_DATE: {
@@ -31,7 +31,7 @@ const accountSchema = new Schema({
     default: () => Date.now(),
   },
   SCH_VID: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: '',
   },
   SCH_BANK_NAME: {
@@ -58,19 +58,19 @@ const accountSchema = new Schema({
     default: 0,
   },
   SCH_PAYEE: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 0,
   },
   SCH_TYPE_PROC: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 0,
   },
   SCH_PERIOD: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 0,
   },
   SCH_PERIOD_NACH_PROC: {
-    type: Number || String,
+    type: Schema.Types.Mixed,
     default: 0,
   },
   SCH_DATE_CREDIT: {
