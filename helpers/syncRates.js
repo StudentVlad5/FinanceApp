@@ -29,7 +29,14 @@ async function syncRates(daysToLookBack = 14) {
           try {
             const res = await axios.get(
               `https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=${valcode}&date=${dateUrl}&json`,
-              { timeout: 5000 },
+              {
+                timeout: 10000,
+                headers: {
+                  'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                  Accept: 'application/json',
+                },
+              },
             );
 
             if (res.data && res.data[0]) {
@@ -45,6 +52,10 @@ async function syncRates(daysToLookBack = 14) {
               attempts++;
             }
           } catch (e) {
+            console.error(
+              `Помилка запиту (${valcode} / ${dateDb}):`,
+              e.response?.status || e.message,
+            );
             attempts++;
           }
         }
