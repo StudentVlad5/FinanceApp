@@ -38,7 +38,6 @@ async function syncRates(daysToLookBack = 14) {
                 },
               },
             );
-
             if (res.data && res.data[0]) {
               await ExchangeRate.create({
                 date: dateDb,

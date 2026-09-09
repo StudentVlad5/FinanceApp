@@ -50,6 +50,7 @@ connectDB()
     app.listen(PORT, async () => {
       console.log('✅ Database connection successful');
       console.log(`🚀 Server running at http://localhost:${PORT}`);
+      await syncRates(14);
       if (typeof k !== 'undefined' && k === 1) {
         await repairMissingRates();
 
