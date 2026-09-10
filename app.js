@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { errorHandler } = require('./helpers');
+const { syncRates } = require('./helpers/syncRates');
+const { repairMissingRates } = require('./helpers/repairMissingRates');
 const {
   routerAuth,
   routerAccouns,
@@ -13,6 +15,7 @@ const {
   routerCategories,
   routerBackup,
 } = require('./routes');
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
@@ -40,6 +43,15 @@ app.use('/api/tags', routerTags);
 app.use('/api/category', routerCategories);
 app.use('/api/backup', routerBackup);
 
+// Функція кешованого підключення для Serverless
+async function ensureDbConnected() {
+  if (mongoose.connection.readyState === 1) return;
+  await mongoose.connect(process.env.mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+}
+
 app.get('/api/cron/sync-rates', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -47,10 +59,11 @@ app.get('/api/cron/sync-rates', async (req, res) => {
   }
 
   try {
-    console.log('Запуск синхронізації через Vercel Cron...');
+    await ensureDbConnected(); // Переконуємось, що база підключена!
 
-    await repairMissingRates();
-    await syncRates(7);
+    console.log('Запуск синхронізації через Vercel Cron...');
+    await syncRates(7); // 1. Спочатку НБУ
+    await repairMissingRates(); // 2. Потім ремонт
 
     return res
       .status(200)
